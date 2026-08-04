@@ -38,8 +38,12 @@
           <span class="icon-sun">{{ icon('sun', 18) }}</span>
           <span class="icon-moon">{{ icon('moon', 18) }}</span>
         </button>
-        <div class="avatar {% if user is defined and user.avatar_frame and user.avatar_frame != 'none' %}frame-{{ user.avatar_frame }}{% endif %}" title="{{ user.full_name if user is defined else '' }}">
+        <div class="avatar {% if user is defined and user.avatar %}avatar-{{ user.avatar }}{% endif %} {% if user is defined and user.avatar_frame and user.avatar_frame != 'none' %}frame-{{ user.avatar_frame }}{% endif %}" title="{{ user.full_name if user is defined else '' }}">
+          {% if user is defined and user.role and user.role.value == 'student' and user.avatar and user.avatar != 'default' %}
+          {{ user.avatar|avatar_emoji }}
+          {% else %}
           {{ (user.full_name[:1] if user is defined and user.full_name else '?')|upper }}
+          {% endif %}
         </div>
       </div>
     </header>

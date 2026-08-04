@@ -53,6 +53,7 @@ FLASH_ERR: dict[str, str] = {
     "no_defer": "Нет отсрочки в инвентаре — купите в магазине",
     "nomoney": "Недостаточно XP",
     "error": "Не удалось выполнить действие",
+    "no_students": "Выберите хотя бы одного ученика или «Всем»",
 }
 
 
@@ -94,13 +95,32 @@ def flash_messages(request) -> list[dict[str, str]]:
     return msgs
 
 
+def weekday_ru(dt) -> str:
+    if not dt:
+        return ""
+    names = ["понедельник", "вторник", "среда", "четверг", "пятница", "суббота", "воскресенье"]
+    try:
+        return names[dt.weekday()]
+    except Exception:
+        return ""
+
+
+def avatar_emoji(key: str | None) -> str:
+    from app.services.homework_check import avatar_emoji as _ae
+
+    return _ae(key)
+
+
 def setup_templates(templates: Jinja2Templates) -> Jinja2Templates:
     templates.env.filters["hw_status"] = hw_status_label
     templates.env.filters["mastery"] = mastery_label
     templates.env.filters["lesson_status"] = lesson_status_label
+    templates.env.filters["weekday_ru"] = weekday_ru
+    templates.env.filters["avatar_emoji"] = avatar_emoji
     templates.env.globals["flash_messages"] = flash_messages
     templates.env.globals["HW_STATUS"] = HW_STATUS
     templates.env.globals["MASTERY"] = MASTERY
+    templates.env.globals["avatar_emoji"] = avatar_emoji
     return templates
 
 

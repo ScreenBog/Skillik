@@ -2,17 +2,22 @@
 {% block title %}Новое ДЗ — Skillik{% endblock %}
 {% block topbar_title %}Новое задание{% endblock %}
 {% block content %}
-<div class="page-header"><div><h1>Выдать домашнее задание</h1></div></div>
+<div class="page-header">
+  <div>
+    <h1>Выдать домашнее задание</h1>
+    <p class="desc">Можно выдать одному, нескольким или всем ученикам сразу</p>
+  </div>
+</div>
 <div class="card">
-  <form method="post" action="/admin/homework/new">
+  <form method="post" action="/admin/homework/new" id="hw-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <div class="form-group">
       <label>Название</label>
-      <input class="form-control" name="title" required>
+      <input class="form-control" name="title" required placeholder="Например: Дроби — практика">
     </div>
     <div class="form-group">
-      <label>Описание</label>
-      <textarea class="form-control" name="description"></textarea>
+      <label>Описание / условие</label>
+      <textarea class="form-control" name="description" placeholder="Текст задания, ссылки, подсказки…"></textarea>
     </div>
     <div class="grid grid-2">
       <div class="form-group">
@@ -48,23 +53,134 @@
         {% endfor %}
       </select>
     </div>
+
     <div class="form-group">
-      <label>Ученики</label>
-      <label class="checkbox-row"><input type="checkbox" name="all_students"> Всем ученикам</label>
-      <div class="flex flex-wrap gap-1">
+      <label>Кому выдать</label>
+      <label class="checkbox-row">
+        <input type="checkbox" name="all_students" id="all_students"> Всем активным ученикам
+      </label>
+      <div class="student-picks flex flex-wrap gap-1 mt-1" id="student-picks">
         {% for s in students %}
-        <label class="checkbox-row">
+        <label class="checkbox-row pick-chip">
           <input type="checkbox" name="student_ids" value="{{ s.id }}"> {{ s.full_name }}
         </label>
+        {% else %}
+        <p class="text-muted text-sm">Нет учеников — сначала создайте аккаунты</p>
         {% endfor %}
       </div>
     </div>
-    <div class="form-group">
-      <label>Автопроверка (JSON)</label>
-      <textarea class="form-control" name="auto_check_json" placeholder='[{"id":"1","type":"input","question":"2+2?","answer":"4","points":1}]' style="min-height:120px;font-family:monospace;font-size:.85rem"></textarea>
-      <p class="form-hint">type: input | test; для test добавьте options: ["a","b"]. Несколько ответов: "4|четыре"</p>
+
+    <hr class="form-sep">
+
+    <h2 class="card-title">Автопроверка (необязательно)</h2>
+    <p class="text-sm text-muted mb-2">
+      Добавьте простые вопросы — система сама посчитает часть балла.
+      Несколько правильных ответов через <code>|</code>, например: <code>4|четыре</code>.
+    </p>
+
+    <div id="aq-list">
+      {% for i in range(5) %}
+      <div class="aq-row card-inner {% if i > 0 %}aq-extra{% endif %}" data-aq="{{ i }}" {% if i > 0 %}style="display:none"{% endif %}>
+        <div class="flex justify-between items-center mb-2">
+          <strong class="text-sm">Вопрос {{ i + 1 }}</strong>
+          {% if i > 0 %}
+          <button type="button" class="btn btn-ghost btn-sm" data-aq-hide="{{ i }}">Скрыть</button>
+          {% endif %}
+        </div>
+        <div class="form-group">
+          <label>Текст вопроса</label>
+          <input class="form-control" name="aq_question_{{ i }}" placeholder="Сколько будет 2+2?">
+        </div>
+        <div class="grid grid-3">
+          <div class="form-group">
+            <label>Тип</label>
+            <select class="form-control" name="aq_type_{{ i }}" data-aq-type="{{ i }}">
+              <option value="input">Ввод ответа</option>
+              <option value="test">Выбор варианта</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Правильный ответ</label>
+            <input class="form-control" name="aq_answer_{{ i }}" placeholder="4">
+          </div>
+          <div class="form-group">
+            <label>Баллы</label>
+            <input class="form-control" type="number" step="0.5" name="aq_points_{{ i }}" value="1">
+          </div>
+        </div>
+        <div class="form-group aq-options" data-aq-options="{{ i }}" style="display:none">
+          <label>Варианты (через ;)</label>
+          <input class="form-control" name="aq_options_{{ i }}" placeholder="2; 3; 4; 5">
+        </div>
+      </div>
+      {% endfor %}
     </div>
-    <button type="submit" class="btn btn-primary">Выдать</button>
+    <button type="button" class="btn btn-outline btn-sm mb-2" id="aq-add">+ Ещё вопрос</button>
+
+    <details class="mt-2 mb-2">
+      <summary class="text-sm text-muted" style="cursor:pointer">Дополнительно: raw JSON</summary>
+      <div class="form-group mt-1">
+        <textarea class="form-control" name="auto_check_json" placeholder='[{"id":"1","type":"input","question":"…","answer":"…","points":1}]' style="min-height:90px;font-family:monospace;font-size:.85rem"></textarea>
+        <p class="form-hint">Если заполнены поля выше — JSON не нужен. JSON имеет приоритет только если поля пусты.</p>
+      </div>
+    </details>
+
+    <button type="submit" class="btn btn-primary">Выдать задание</button>
+    <a href="/admin/homework" class="btn btn-ghost">Отмена</a>
   </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var shown = 1;
+  var addBtn = document.getElementById("aq-add");
+  if (addBtn) {
+    addBtn.addEventListener("click", function () {
+      var rows = document.querySelectorAll(".aq-row");
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].style.display === "none") {
+          rows[i].style.display = "";
+          shown++;
+          if (i === rows.length - 1) addBtn.style.display = "none";
+          break;
+        }
+      }
+    });
+  }
+  document.querySelectorAll("[data-aq-hide]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var i = btn.getAttribute("data-aq-hide");
+      var row = document.querySelector('.aq-row[data-aq="' + i + '"]');
+      if (row) {
+        row.style.display = "none";
+        row.querySelectorAll("input, select").forEach(function (el) {
+          if (el.name && el.name.indexOf("aq_question") === 0) el.value = "";
+        });
+      }
+      if (addBtn) addBtn.style.display = "";
+    });
+  });
+  document.querySelectorAll("[data-aq-type]").forEach(function (sel) {
+    function sync() {
+      var i = sel.getAttribute("data-aq-type");
+      var box = document.querySelector('[data-aq-options="' + i + '"]');
+      if (box) box.style.display = sel.value === "test" ? "" : "none";
+    }
+    sel.addEventListener("change", sync);
+    sync();
+  });
+  var all = document.getElementById("all_students");
+  var picks = document.getElementById("student-picks");
+  if (all && picks) {
+    all.addEventListener("change", function () {
+      picks.style.opacity = all.checked ? "0.45" : "1";
+      picks.querySelectorAll("input[type=checkbox]").forEach(function (cb) {
+        if (all.checked) cb.checked = false;
+      });
+    });
+  }
+})();
+</script>
 {% endblock %}

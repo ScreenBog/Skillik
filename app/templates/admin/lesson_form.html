@@ -5,7 +5,11 @@
 <div class="page-header">
   <div>
     <h1>{% if lesson %}{{ lesson.title }}{% else %}Новый урок{% endif %}</h1>
+    {% if not lesson %}<p class="desc">Можно начать с шаблона</p>{% endif %}
   </div>
+  {% if not lesson %}
+  <a href="/admin/templates" class="btn btn-outline btn-sm">Управление шаблонами</a>
+  {% endif %}
 </div>
 
 {% if request.query_params.get('error') %}
@@ -15,13 +19,32 @@
 </div>
 {% endif %}
 
+{% if not lesson and templates_list %}
+<div class="card mb-2">
+  <label class="text-sm"><strong>Шаблон</strong></label>
+  <form method="get" action="/admin/lessons/new" class="flex flex-wrap gap-1 items-center mt-1">
+    <select class="form-control" name="template_id" style="max-width:320px" onchange="this.form.submit()">
+      <option value="0">— с нуля —</option>
+      {% for t in templates_list %}
+      <option value="{{ t.id }}" {% if selected_template_id == t.id %}selected{% endif %}>{{ t.title }} ({{ t.subject }})</option>
+      {% endfor %}
+    </select>
+    <noscript><button type="submit" class="btn btn-outline btn-sm">Применить</button></noscript>
+  </form>
+  {% if prefill %}
+  <p class="form-hint mt-1">Поля заполнены из шаблона — можно править перед сохранением.</p>
+  {% endif %}
+</div>
+{% endif %}
+
 <div class="card">
   <form method="post" action="{% if lesson %}/admin/lessons/{{ lesson.id }}{% else %}/admin/lessons/new{% endif %}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <div class="grid grid-2">
       <div class="form-group">
         <label>Название</label>
-        <input class="form-control" name="title" required value="{{ lesson.title if lesson else '' }}">
+        <input class="form-control" name="title" required
+          value="{% if lesson %}{{ lesson.title }}{% elif prefill %}{{ prefill.title }}{% endif %}">
       </div>
       <div class="form-group">
         <label>Дата и время</label>
@@ -31,11 +54,11 @@
     </div>
     <div class="form-group">
       <label>Краткое описание</label>
-      <textarea class="form-control" name="description">{{ lesson.description if lesson and lesson.description else '' }}</textarea>
+      <textarea class="form-control" name="description">{% if lesson and lesson.description %}{{ lesson.description }}{% elif prefill %}{{ prefill.description }}{% endif %}</textarea>
     </div>
     <div class="form-group">
       <label>Содержание</label>
-      <textarea class="form-control" name="content" style="min-height:160px">{{ lesson.content if lesson and lesson.content else '' }}</textarea>
+      <textarea class="form-control" name="content" style="min-height:160px">{% if lesson and lesson.content %}{{ lesson.content }}{% elif prefill %}{{ prefill.content }}{% endif %}</textarea>
     </div>
     <div class="grid grid-2">
       <div class="form-group">

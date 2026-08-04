@@ -5,23 +5,41 @@
 <div class="page-header">
   <div>
     <h1>Магазин</h1>
-    <p class="desc">Твой баланс: <strong>{{ user.xp }} XP</strong></p>
+    <p class="desc">Баланс: <strong>{{ user.xp }} XP</strong>
+      · сейчас {{ user.avatar|avatar_emoji }}
+      {% if user.avatar_frame and user.avatar_frame != 'none' %}· рамка {{ user.avatar_frame }}{% endif %}
+    </p>
   </div>
 </div>
 
 <div class="grid grid-3">
   {% for i in items %}
-  <div class="card">
+  <div class="card shop-card">
+    <div class="shop-preview">
+      {% if i.item_type == 'avatar' %}
+      <div class="avatar avatar-lg avatar-{{ i.value }}">{{ i.value|avatar_emoji }}</div>
+      {% elif i.item_type == 'frame' %}
+      <div class="avatar avatar-lg frame-{{ i.value }}">{{ user.avatar|avatar_emoji }}</div>
+      {% elif i.item_type == 'accent_color' %}
+      <div class="color-swatch" style="background:{{ i.value }}"></div>
+      {% elif i.item_type == 'defer_hw' %}
+      <div class="shop-emoji">⏰</div>
+      {% else %}
+      <div class="shop-emoji">✨</div>
+      {% endif %}
+    </div>
     <h2 class="card-title">{{ i.title }}</h2>
     <p class="text-sm text-muted">{{ i.description or i.item_type }}</p>
     <p class="mt-1"><span class="xp-chip">{{ i.price_xp }} XP</span></p>
     <form method="post" action="/student/shop/{{ i.id }}/buy" class="mt-2">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <button type="submit" class="btn btn-accent btn-sm" {% if user.xp < i.price_xp %}disabled{% endif %}>Купить</button>
+      <button type="submit" class="btn btn-accent btn-sm" {% if user.xp < i.price_xp %}disabled{% endif %}>
+        {% if user.xp < i.price_xp %}Мало XP{% else %}Купить{% endif %}
+      </button>
     </form>
   </div>
   {% else %}
-  <div class="empty">Магазин пуст</div>
+  <div class="empty-state" style="grid-column:1/-1">Магазин пуст</div>
   {% endfor %}
 </div>
 
@@ -31,7 +49,10 @@
   <ul class="file-list">
     {% for p in purchases %}
     <li>
-      {{ p.item.title if p.item else p.item_id }}
+      <span>
+        {% if p.item and p.item.item_type == 'avatar' %}{{ p.item.value|avatar_emoji }} {% endif %}
+        {{ p.item.title if p.item else p.item_id }}
+      </span>
       <span class="text-muted text-sm">−{{ p.price_paid }} XP
         {% if not p.is_used and p.item and p.item.item_type == 'defer_hw' %}· можно использовать{% endif %}
       </span>

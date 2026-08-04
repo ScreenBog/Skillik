@@ -27,6 +27,7 @@ from app.deps import csrf_token_for
 from app.security import hash_password, sanitize_filename
 from app.services.export import export_homework_csv, export_students_csv
 from app.services.gamification import add_xp, level_title
+from app.services.homework_check import build_tasks_from_form, tasks_to_json
 from app.templating import get_templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -298,10 +299,21 @@ async def lesson_new(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     admin: Annotated[User, Depends(require_admin)],
+    template_id: int = 0,
 ):
     topics = db.query(Topic).filter(Topic.parent_id.isnot(None)).order_by(Topic.title).all()
     students = db.query(User).filter(User.role == UserRole.STUDENT, User.is_active.is_(True)).all()
     templates_list = db.query(LessonTemplate).order_by(LessonTemplate.title).all()
+    # Prefill из шаблона
+    prefill = None
+    if template_id:
+        tpl = db.get(LessonTemplate, template_id)
+        if tpl:
+            prefill = {
+                "title": tpl.title,
+                "description": tpl.description or "",
+                "content": tpl.content or "",
+            }
     return templates.TemplateResponse(
         "admin/lesson_form.html",
         _ctx(
@@ -311,6 +323,8 @@ async def lesson_new(
             topics=topics,
             students=students,
             templates_list=templates_list,
+            prefill=prefill,
+            selected_template_id=template_id or None,
         ),
     )
 
@@ -498,6 +512,7 @@ async def homework_new(
 
 @router.post("/homework/new")
 async def homework_create(
+    request: Request,
     db: Annotated[Session, Depends(get_db)],
     admin: Annotated[User, Depends(require_admin)],
     title: Annotated[str, Form()],
@@ -525,14 +540,19 @@ async def homework_create(
         except ValueError:
             pass
 
-    # Валидация JSON автопроверки
-    ac = None
-    if auto_check_json.strip():
+    # Автопроверка: сначала удобные поля формы, иначе raw JSON
+    form = await request.form()
+    tasks = build_tasks_from_form(form)
+    ac = tasks_to_json(tasks)
+    if not ac and auto_check_json.strip():
         try:
             json.loads(auto_check_json)
             ac = auto_check_json.strip()
         except json.JSONDecodeError:
             ac = None
+
+    if not ids:
+        return RedirectResponse("/admin/homework/new?error=no_students", status_code=302)
 
     for sid in ids:
         hw = Homework(
@@ -837,6 +857,7 @@ async def calendar(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     admin: Annotated[User, Depends(require_admin)],
+    filter: str = "upcoming",
 ):
     lessons = (
         db.query(Lesson)
@@ -844,9 +865,22 @@ async def calendar(
         .order_by(Lesson.scheduled_at.asc())
         .all()
     )
+    now = datetime.utcnow()
+    if filter == "upcoming":
+        lessons = [l for l in lessons if l.scheduled_at and l.scheduled_at >= now]
+    elif filter == "past":
+        lessons = [l for l in lessons if l.scheduled_at and l.scheduled_at < now]
+        lessons = list(reversed(lessons))
+    # Группировка по дате
+    groups: dict[str, list] = {}
+    for l in lessons:
+        if not l.scheduled_at:
+            continue
+        key = l.scheduled_at.strftime("%Y-%m-%d")
+        groups.setdefault(key, []).append(l)
     return templates.TemplateResponse(
         "admin/calendar.html",
-        _ctx(request, admin, lessons=lessons),
+        _ctx(request, admin, lessons=lessons, groups=groups, filter=filter),
     )
 
 

@@ -2,22 +2,56 @@
 {% block title %}Календарь — Skillik{% endblock %}
 {% block topbar_title %}Календарь{% endblock %}
 {% block content %}
-<div class="page-header"><div><h1>Календарь занятий</h1></div></div>
-<div class="card">
-  <ul class="file-list">
-    {% for l in lessons %}
-    <li>
-      <div>
-        <a href="/admin/lessons/{{ l.id }}"><strong>{{ l.title }}</strong></a>
-        <div class="text-sm text-muted">
-          {{ l.scheduled_at.strftime('%A, %d.%m.%Y · %H:%M') if l.scheduled_at else '' }}
-          · {{ l.duration_minutes }} мин · {{ l.status }}
-        </div>
-      </div>
-    </li>
-    {% else %}
-    <li class="empty">Нет занятий с датой</li>
-    {% endfor %}
-  </ul>
+<div class="page-header">
+  <div>
+    <h1>Календарь занятий</h1>
+    <p class="desc">Расписание по дням</p>
+  </div>
+  <a href="/admin/lessons/new" class="btn btn-accent btn-sm">+ Урок</a>
 </div>
+
+<div class="filter-chips">
+  <a href="/admin/calendar?filter=upcoming" class="btn btn-sm btn-outline {% if filter == 'upcoming' %}active{% endif %}">Предстоящие</a>
+  <a href="/admin/calendar?filter=past" class="btn btn-sm btn-outline {% if filter == 'past' %}active{% endif %}">Прошедшие</a>
+  <a href="/admin/calendar?filter=all" class="btn btn-sm btn-outline {% if filter == 'all' %}active{% endif %}">Все</a>
+</div>
+
+{% if groups %}
+  {% for day, day_lessons in groups.items() %}
+  <div class="card mb-2">
+    <h2 class="card-title">
+      {{ day_lessons[0].scheduled_at|weekday_ru|capitalize }},
+      {{ day_lessons[0].scheduled_at.strftime('%d.%m.%Y') }}
+    </h2>
+    <ul class="file-list">
+      {% for l in day_lessons %}
+      <li>
+        <div class="flex items-center gap-1" style="flex:1">
+          <span class="cal-time">{{ l.scheduled_at.strftime('%H:%M') }}</span>
+          <div>
+            <a href="/admin/lessons/{{ l.id }}"><strong>{{ l.title }}</strong></a>
+            <div class="text-sm text-muted">
+              {{ l.duration_minutes }} мин
+              · {{ l.status|lesson_status }}
+              {% if l.student %}· {{ l.student.full_name }}{% else %}· общий{% endif %}
+            </div>
+          </div>
+        </div>
+        <a href="/admin/lessons/{{ l.id }}" class="btn btn-sm btn-outline">Открыть</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">📅</div>
+  <p>
+    {% if filter == 'upcoming' %}Нет предстоящих занятий с датой.
+    {% elif filter == 'past' %}Нет прошедших занятий.
+    {% else %}Нет занятий с указанной датой.{% endif %}
+  </p>
+  <a href="/admin/lessons/new" class="btn btn-accent btn-sm">Запланировать урок</a>
+</div>
+{% endif %}
 {% endblock %}

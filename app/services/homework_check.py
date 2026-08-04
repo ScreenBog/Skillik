@@ -72,3 +72,61 @@ def tasks_to_public(tasks_json: str | None) -> list[dict[str, Any]]:
             }
         )
     return public
+
+
+def build_tasks_from_form(form: Any) -> list[dict[str, Any]]:
+    """
+    Собрать задания из полей формы:
+      aq_question_0, aq_answer_0, aq_type_0, aq_points_0, aq_options_0
+    """
+    tasks: list[dict[str, Any]] = []
+    # поддержка 0..9
+    for i in range(10):
+        q = str(form.get(f"aq_question_{i}", "") or "").strip()
+        if not q:
+            continue
+        ans = str(form.get(f"aq_answer_{i}", "") or "").strip()
+        ttype = str(form.get(f"aq_type_{i}", "input") or "input").strip()
+        if ttype not in ("input", "test"):
+            ttype = "input"
+        try:
+            points = float(form.get(f"aq_points_{i}", 1) or 1)
+        except (TypeError, ValueError):
+            points = 1.0
+        options_raw = str(form.get(f"aq_options_{i}", "") or "").strip()
+        task: dict[str, Any] = {
+            "id": str(i + 1),
+            "type": ttype,
+            "question": q,
+            "answer": ans,
+            "points": points,
+        }
+        if ttype == "test" and options_raw:
+            # варианты через ; или |
+            opts = [o.strip() for o in options_raw.replace("|", ";").split(";") if o.strip()]
+            if opts:
+                task["options"] = opts
+        tasks.append(task)
+    return tasks
+
+
+def tasks_to_json(tasks: list[dict[str, Any]]) -> str | None:
+    if not tasks:
+        return None
+    return json.dumps(tasks, ensure_ascii=False)
+
+
+# Визуальные аватары магазина
+AVATAR_EMOJI: dict[str, str] = {
+    "default": "🙂",
+    "fox": "🦊",
+    "owl": "🦉",
+    "robot": "🤖",
+    "cat": "🐱",
+    "bear": "🐻",
+    "star": "⭐",
+}
+
+
+def avatar_emoji(key: str | None) -> str:
+    return AVATAR_EMOJI.get(key or "default", "🙂")

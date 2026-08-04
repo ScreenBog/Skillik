@@ -158,18 +158,21 @@ def main() -> int:
     if admin:
         code, html, _ = admin.get("/admin/students/new")
         csrf = admin.csrf(html)
+        import time
+
+        uname = f"test_smoke_{int(time.time()) % 100000}"
         code, html, _ = admin.post(
             "/admin/students/new",
             {
                 "csrf_token": csrf or "",
                 "full_name": "Тест Ученик",
-                "username": "test_smoke",
+                "username": uname,
                 "password": "test1234",
                 "email": "",
             },
         )
-        ok = code == 200 and ("test_smoke" in html or "Ученик создан" in html)
-        check("create student test_smoke", ok, f"code={code}")
+        ok = code == 200 and (uname in html or "Ученик создан" in html)
+        check("create student", ok, f"code={code} user={uname}")
 
         # Create lesson
         code, html, _ = admin.get("/admin/lessons/new")

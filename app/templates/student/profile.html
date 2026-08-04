@@ -23,11 +23,27 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Аватар (ключ)</label>
-        <input class="form-control" name="avatar" value="{{ user.avatar }}">
-        <p class="form-hint">Ключи из магазина: default, fox, owl, robot…</p>
+        <label>Аватар</label>
+        <div class="flex items-center gap-2 mb-2">
+          <div class="avatar avatar-lg avatar-{{ user.avatar }} {% if user.avatar_frame and user.avatar_frame != 'none' %}frame-{{ user.avatar_frame }}{% endif %}">
+            {{ user.avatar|avatar_emoji if user.avatar != 'default' else (user.full_name[:1]|upper) }}
+          </div>
+          <div class="text-sm text-muted">
+            Купленные аватары и рамки применяются из магазина.<br>
+            Сейчас: <strong>{{ user.avatar }}</strong>
+            {% if user.avatar_frame and user.avatar_frame != 'none' %} · рамка {{ user.avatar_frame }}{% endif %}
+          </div>
+        </div>
+        <select class="form-control" name="avatar">
+          <option value="default" {% if user.avatar == 'default' %}selected{% endif %}>🙂 По умолчанию</option>
+          <option value="fox" {% if user.avatar == 'fox' %}selected{% endif %}>🦊 Лиса</option>
+          <option value="owl" {% if user.avatar == 'owl' %}selected{% endif %}>🦉 Сова</option>
+          <option value="robot" {% if user.avatar == 'robot' %}selected{% endif %}>🤖 Робот</option>
+          <option value="cat" {% if user.avatar == 'cat' %}selected{% endif %}>🐱 Кот</option>
+          <option value="bear" {% if user.avatar == 'bear' %}selected{% endif %}>🐻 Медведь</option>
+        </select>
       </div>
-      <p class="text-sm text-muted">Рамка: {{ user.avatar_frame }} · Акцент: {{ user.accent_color or 'по умолчанию' }}</p>
+      <p class="text-sm text-muted">Акцент: {% if user.accent_color %}<span class="color-swatch-inline" style="background:{{ user.accent_color }}"></span> {{ user.accent_color }}{% else %}по умолчанию{% endif %}</p>
       <button type="submit" class="btn btn-primary">Сохранить</button>
     </form>
   </div>

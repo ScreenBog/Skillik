@@ -2,21 +2,33 @@
 {% block title %}Шаблоны — Skillik{% endblock %}
 {% block topbar_title %}Шаблоны уроков{% endblock %}
 {% block content %}
-<div class="page-header"><div><h1>Шаблоны уроков</h1></div></div>
+<div class="page-header">
+  <div>
+    <h1>Шаблоны уроков</h1>
+    <p class="desc">Быстрый старт при создании занятия</p>
+  </div>
+</div>
+
 <div class="card mb-2">
+  {% if items %}
   <ul class="file-list">
     {% for i in items %}
     <li>
       <div>
         <strong>{{ i.title }}</strong>
-        <div class="text-sm text-muted">{{ i.subject }} · {{ i.description or '' }}</div>
+        <div class="text-sm text-muted">{{ i.subject }} · {{ i.description or 'без описания' }}</div>
       </div>
+      <a href="/admin/lessons/new?template_id={{ i.id }}" class="btn btn-sm btn-accent">Использовать</a>
     </li>
-    {% else %}
-    <li class="empty">Шаблонов пока нет</li>
     {% endfor %}
   </ul>
+  {% else %}
+  <div class="empty-state" style="border:none">
+    <p>Шаблонов пока нет — создайте первый ниже.</p>
+  </div>
+  {% endif %}
 </div>
+
 <div class="card">
   <h2 class="card-title">Новый шаблон</h2>
   <form method="post" action="/admin/templates/new">
@@ -31,7 +43,7 @@
         <option value="informatics">Информатика</option>
       </select>
     </div>
-    <button type="submit" class="btn btn-primary">Сохранить</button>
+    <button type="submit" class="btn btn-primary">Сохранить шаблон</button>
   </form>
 </div>
 {% endblock %}
