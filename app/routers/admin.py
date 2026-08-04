@@ -27,12 +27,55 @@ from app.deps import csrf_token_for
 from app.security import hash_password, sanitize_filename
 from app.services.export import export_homework_csv, export_students_csv
 from app.services.gamification import add_xp, level_title
-from app.services.homework_check import build_tasks_from_form, tasks_to_json
+from app.services.homework_check import (
+    MAX_AUTO_QUESTIONS,
+    build_tasks_from_form,
+    import_from_ai_json,
+    tasks_to_json,
+)
 from app.templating import get_templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 templates = get_templates()
 settings = get_settings()
+
+_AI_HW_PROMPT = """Сгенерируй домашнее задание по математике / информатике для 5–7 класса.
+
+Тема: [сюда тему]
+Класс: [5/6/7]
+Количество заданий: 5–8
+Сложность: средняя
+
+Верни ТОЛЬКО валидный JSON в таком формате (без markdown и пояснений):
+
+{
+  "title": "...",
+  "description": "...",
+  "max_score": 5,
+  "xp_reward": 25,
+  "tasks": [
+    {
+      "type": "input",
+      "question": "текст вопроса",
+      "answer": "правильный ответ (несколько через |)",
+      "points": 1
+    },
+    {
+      "type": "test",
+      "question": "текст вопроса",
+      "options": ["вариант1", "вариант2", "вариант3"],
+      "answer": "вариант1",
+      "points": 1
+    }
+  ]
+}
+
+Правила:
+- type: "input" (вписать) или "test" (выбор)
+- answer: правильный ответ; несколько допустимых через |
+- options: только для test
+- points: баллы (по умолчанию 1)
+"""
 
 
 def _ctx(request: Request, user: User, **kwargs):
@@ -506,8 +549,54 @@ async def homework_new(
     lessons = db.query(Lesson).order_by(Lesson.created_at.desc()).limit(50).all()
     return templates.TemplateResponse(
         "admin/homework_form.html",
-        _ctx(request, admin, students=students, topics=topics, lessons=lessons),
+        _ctx(
+            request,
+            admin,
+            students=students,
+            topics=topics,
+            lessons=lessons,
+            max_aq=MAX_AUTO_QUESTIONS,
+            ai_prompt_example=_AI_HW_PROMPT,
+        ),
     )
+
+
+@router.post("/homework/parse-json")
+async def homework_parse_json(
+    request: Request,
+    admin: Annotated[User, Depends(require_admin)],
+    raw_json: Annotated[str, Form()] = "",
+    csrf_token: Annotated[str, Form()] = "",
+):
+    """Разобрать JSON от нейросети → структурированные данные для формы."""
+    from app.deps import verify_csrf
+    from app.config import get_settings as gs
+
+    s = gs()
+    cookie = request.cookies.get(s.csrf_cookie_name, "")
+    if not cookie or "." not in cookie:
+        return {"ok": False, "errors": ["CSRF: обновите страницу"]}
+    raw_c, sig = cookie.rsplit(".", 1)
+    if not verify_csrf(raw_c, sig) or raw_c != csrf_token:
+        return {"ok": False, "errors": ["CSRF: токен не совпадает, обновите страницу"]}
+
+    data, errors = import_from_ai_json(raw_json)
+    if data is None:
+        return {"ok": False, "errors": errors or ["Не удалось разобрать JSON"]}
+    # warnings = некритичные errors при успешном парсе
+    return {
+        "ok": True,
+        "warnings": errors,
+        "data": {
+            "title": data["title"],
+            "description": data["description"],
+            "max_score": data["max_score"],
+            "xp_reward": data["xp_reward"],
+            "tasks": data["tasks"],
+            "tasks_count": data["tasks_count"],
+            "tasks_json": data["tasks_json"],
+        },
+    }
 
 
 @router.post("/homework/new")
@@ -525,6 +614,7 @@ async def homework_create(
     topic_id: Annotated[str, Form()] = "",
     lesson_id: Annotated[str, Form()] = "",
     auto_check_json: Annotated[str, Form()] = "",
+    ai_package_json: Annotated[str, Form()] = "",
     _: Annotated[None, Depends(verify_csrf_form)] = None,
 ):
     ids: list[int] = []
@@ -540,16 +630,35 @@ async def homework_create(
         except ValueError:
             pass
 
-    # Автопроверка: сначала удобные поля формы, иначе raw JSON
     form = await request.form()
     tasks = build_tasks_from_form(form)
     ac = tasks_to_json(tasks)
+
+    # Пакет от нейросети (полный JSON) — приоритет, если поля формы пусты
+    if not ac and ai_package_json.strip():
+        imported, _errs = import_from_ai_json(ai_package_json)
+        if imported:
+            ac = imported["tasks_json"]
+            if not title.strip() or title.strip() == "Домашнее задание":
+                title = imported["title"]
+            if not description.strip():
+                description = imported["description"]
+            if imported.get("max_score"):
+                max_score = float(imported["max_score"])
+            if imported.get("xp_reward"):
+                xp_reward = int(imported["xp_reward"])
+
     if not ac and auto_check_json.strip():
-        try:
-            json.loads(auto_check_json)
-            ac = auto_check_json.strip()
-        except json.JSONDecodeError:
-            ac = None
+        imported, _errs = import_from_ai_json(auto_check_json)
+        if imported:
+            ac = imported["tasks_json"]
+        else:
+            try:
+                parsed = json.loads(auto_check_json)
+                if isinstance(parsed, list):
+                    ac = auto_check_json.strip()
+            except json.JSONDecodeError:
+                ac = None
 
     if not ids:
         return RedirectResponse("/admin/homework/new?error=no_students", status_code=302)

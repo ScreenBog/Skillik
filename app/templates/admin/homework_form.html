@@ -2,15 +2,49 @@
 {% block title %}Новое ДЗ — Skillik{% endblock %}
 {% block topbar_title %}Новое задание{% endblock %}
 {% block content %}
+{% set max_aq = max_aq|default(20) %}
 <div class="page-header">
   <div>
     <h1>Выдать домашнее задание</h1>
-    <p class="desc">Можно выдать одному, нескольким или всем ученикам сразу</p>
+    <p class="desc">Вручную, массово всем, или импорт JSON от нейросети</p>
   </div>
+  <button type="button" class="btn btn-accent" id="ai-import-toggle">Вставить из JSON / нейросети</button>
 </div>
+
+{# ——— Импорт из JSON ——— #}
+<div class="card mb-2" id="ai-import-panel" style="display:none">
+  <h2 class="card-title">Импорт от нейросети</h2>
+  <p class="text-sm text-muted mb-2">
+    Сгенерируй JSON в Grok / ChatGPT / Claude по промту ниже → вставь сюда → «Разобрать и заполнить».
+  </p>
+
+  <details class="mb-2">
+    <summary class="text-sm" style="cursor:pointer;color:var(--color-accent)"><strong>Промт для нейросети</strong> (нажми, чтобы раскрыть)</summary>
+    <div class="card-inner mt-1">
+      <pre id="ai-prompt-text" class="ai-prompt-pre">{{ ai_prompt_example }}</pre>
+      <button type="button" class="btn btn-outline btn-sm" id="ai-copy-prompt">Копировать промт</button>
+    </div>
+  </details>
+
+  <div class="form-group">
+    <label>JSON</label>
+    <textarea class="form-control" id="ai-import-raw" rows="12" spellcheck="false"
+      placeholder='{"title":"...","description":"...","tasks":[{"type":"input","question":"...","answer":"...","points":1}]}'
+      style="font-family:ui-monospace,Consolas,monospace;font-size:.85rem"></textarea>
+  </div>
+  <div class="flex flex-wrap gap-1">
+    <button type="button" class="btn btn-primary" id="ai-import-parse">Разобрать и заполнить</button>
+    <button type="button" class="btn btn-outline btn-sm" id="ai-import-example">Вставить пример</button>
+  </div>
+  <div id="ai-import-status" class="alert mt-2" style="display:none" role="status"></div>
+  <div id="ai-import-preview" class="ai-preview card-inner mt-2" style="display:none"></div>
+</div>
+
 <div class="card">
-  <form method="post" action="/admin/homework/new" id="hw-form">
+  <form method="post" action="/admin/homework/new" id="hw-form" data-max-aq="{{ max_aq }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="ai_package_json" id="ai_package_json" value="">
+
     <div class="form-group">
       <label>Название</label>
       <input class="form-control" name="title" required placeholder="Например: Дроби — практика">
@@ -72,15 +106,15 @@
 
     <hr class="form-sep">
 
-    <h2 class="card-title">Автопроверка (необязательно)</h2>
+    <h2 class="card-title">Автопроверка</h2>
     <p class="text-sm text-muted mb-2">
-      Добавьте простые вопросы — система сама посчитает часть балла.
-      Несколько правильных ответов через <code>|</code>, например: <code>4|четыре</code>.
+      Вопросы для автопроверки. Несколько правильных ответов через <code>|</code> (например <code>3/4|0.75</code>).
+      Можно заполнить вручную или через импорт JSON сверху.
     </p>
 
     <div id="aq-list">
-      {% for i in range(5) %}
-      <div class="aq-row card-inner {% if i > 0 %}aq-extra{% endif %}" data-aq="{{ i }}" {% if i > 0 %}style="display:none"{% endif %}>
+      {% for i in range(max_aq) %}
+      <div class="aq-row card-inner" data-aq="{{ i }}" {% if i > 0 %}style="display:none"{% endif %}>
         <div class="flex justify-between items-center mb-2">
           <strong class="text-sm">Вопрос {{ i + 1 }}</strong>
           {% if i > 0 %}
@@ -118,10 +152,9 @@
     <button type="button" class="btn btn-outline btn-sm mb-2" id="aq-add">+ Ещё вопрос</button>
 
     <details class="mt-2 mb-2">
-      <summary class="text-sm text-muted" style="cursor:pointer">Дополнительно: raw JSON</summary>
+      <summary class="text-sm text-muted" style="cursor:pointer">Служебно: raw tasks JSON</summary>
       <div class="form-group mt-1">
-        <textarea class="form-control" name="auto_check_json" placeholder='[{"id":"1","type":"input","question":"…","answer":"…","points":1}]' style="min-height:90px;font-family:monospace;font-size:.85rem"></textarea>
-        <p class="form-hint">Если заполнены поля выше — JSON не нужен. JSON имеет приоритет только если поля пусты.</p>
+        <textarea class="form-control" name="auto_check_json" style="min-height:80px;font-family:monospace;font-size:.85rem"></textarea>
       </div>
     </details>
 
@@ -132,9 +165,10 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="/static/js/homework_import.js"></script>
 <script>
 (function () {
-  var shown = 1;
+  var maxAq = {{ max_aq }};
   var addBtn = document.getElementById("aq-add");
   if (addBtn) {
     addBtn.addEventListener("click", function () {
@@ -142,7 +176,6 @@
       for (var i = 0; i < rows.length; i++) {
         if (rows[i].style.display === "none") {
           rows[i].style.display = "";
-          shown++;
           if (i === rows.length - 1) addBtn.style.display = "none";
           break;
         }
@@ -155,9 +188,8 @@
       var row = document.querySelector('.aq-row[data-aq="' + i + '"]');
       if (row) {
         row.style.display = "none";
-        row.querySelectorAll("input, select").forEach(function (el) {
-          if (el.name && el.name.indexOf("aq_question") === 0) el.value = "";
-        });
+        var q = row.querySelector('[name="aq_question_' + i + '"]');
+        if (q) q.value = "";
       }
       if (addBtn) addBtn.style.display = "";
     });
