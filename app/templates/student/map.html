@@ -1,0 +1,33 @@
+{% extends "student/base_student.html" %}
+{% block title %}Карта знаний — Skillik{% endblock %}
+{% block topbar_title %}Карта знаний{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Карта знаний</h1>
+    <p class="desc">Твой прогресс по темам</p>
+  </div>
+</div>
+
+{% for root in roots %}
+<div class="map-subject">
+  <h2>{{ root.title }}</h2>
+  <div class="map-topics">
+    {% for t in root.children %}
+    {% set p = progress.get(t.id) %}
+    {% set pct = p.progress if p else 0 %}
+    <a href="/student/practice?topic_id={{ t.id }}" class="map-node" style="text-decoration:none;color:inherit">
+      <div class="node-title">{{ t.title }}</div>
+      <div class="progress"><div class="progress-bar" style="width:{{ pct }}%"></div></div>
+      <div class="node-meta">
+        {{ '%.0f'|format(pct) }}%
+        {% if p %}· {{ p.mastery }}{% else %}· не начато{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="card empty">Темы пока не добавлены</div>
+{% endfor %}
+{% endblock %}

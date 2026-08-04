@@ -1,0 +1,68 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Темы — Skillik{% endblock %}
+{% block topbar_title %}Карта знаний{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Темы</h1><p class="desc">Структура карты знаний</p></div>
+</div>
+
+{% if request.query_params.get('ok') %}<div class="alert alert-success">Тема добавлена</div>{% endif %}
+
+{% for root in roots %}
+<div class="card mb-2">
+  <h2 class="card-title">{{ root.title }} <span class="badge">{{ root.subject }}</span></h2>
+  <ul class="file-list">
+    {% for c in root.children %}
+    <li>
+      <div>
+        <strong>{{ c.title }}</strong>
+        <div class="text-sm text-muted">{{ c.slug }} · {{ c.description or '' }}</div>
+      </div>
+    </li>
+    {% else %}
+    <li class="text-muted">Нет подразделов</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endfor %}
+
+<div class="card">
+  <h2 class="card-title">Добавить тему</h2>
+  <form method="post" action="/admin/topics/new">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="grid grid-2">
+      <div class="form-group">
+        <label>Название</label>
+        <input class="form-control" name="title" required>
+      </div>
+      <div class="form-group">
+        <label>Slug</label>
+        <input class="form-control" name="slug" required placeholder="fractions">
+      </div>
+    </div>
+    <div class="grid grid-2">
+      <div class="form-group">
+        <label>Предмет</label>
+        <select class="form-control" name="subject">
+          <option value="math">Математика</option>
+          <option value="informatics">Информатика</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Родитель</label>
+        <select class="form-control" name="parent_id">
+          <option value="">Корень</option>
+          {% for root in roots %}
+          <option value="{{ root.id }}">{{ root.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Описание</label>
+      <input class="form-control" name="description">
+    </div>
+    <button type="submit" class="btn btn-primary">Добавить</button>
+  </form>
+</div>
+{% endblock %}

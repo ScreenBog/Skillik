@@ -1,0 +1,125 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{% if lesson %}Урок{% else %}Новый урок{% endif %} — Skillik{% endblock %}
+{% block topbar_title %}Урок{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{% if lesson %}{{ lesson.title }}{% else %}Новый урок{% endif %}</h1>
+  </div>
+</div>
+
+{% if request.query_params.get('ok') %}<div class="alert alert-success">Сохранено</div>{% endif %}
+{% if request.query_params.get('error') %}<div class="alert alert-error">{{ request.query_params.get('error') }}</div>{% endif %}
+
+<div class="card">
+  <form method="post" action="{% if lesson %}/admin/lessons/{{ lesson.id }}{% else %}/admin/lessons/new{% endif %}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="grid grid-2">
+      <div class="form-group">
+        <label>Название</label>
+        <input class="form-control" name="title" required value="{{ lesson.title if lesson else '' }}">
+      </div>
+      <div class="form-group">
+        <label>Дата и время</label>
+        <input class="form-control" type="datetime-local" name="scheduled_at"
+          value="{% if lesson and lesson.scheduled_at %}{{ lesson.scheduled_at.strftime('%Y-%m-%dT%H:%M') }}{% endif %}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Краткое описание</label>
+      <textarea class="form-control" name="description">{{ lesson.description if lesson and lesson.description else '' }}</textarea>
+    </div>
+    <div class="form-group">
+      <label>Содержание</label>
+      <textarea class="form-control" name="content" style="min-height:160px">{{ lesson.content if lesson and lesson.content else '' }}</textarea>
+    </div>
+    <div class="grid grid-2">
+      <div class="form-group">
+        <label>YouTube URL</label>
+        <input class="form-control" name="youtube_url" placeholder="https://www.youtube.com/watch?v=..."
+          value="{{ lesson.youtube_url if lesson and lesson.youtube_url else '' }}">
+      </div>
+      <div class="form-group">
+        <label>Таймкод (секунды)</label>
+        <input class="form-control" name="youtube_start" type="number" min="0"
+          value="{{ lesson.youtube_start if lesson and lesson.youtube_start is not none else '' }}">
+      </div>
+    </div>
+    <div class="grid grid-3">
+      <div class="form-group">
+        <label>Длительность (мин)</label>
+        <input class="form-control" type="number" name="duration_minutes" value="{{ lesson.duration_minutes if lesson else 60 }}">
+      </div>
+      <div class="form-group">
+        <label>Ученик (пусто = всем)</label>
+        <select class="form-control" name="student_id">
+          <option value="">Все / общий</option>
+          {% for s in students %}
+          <option value="{{ s.id }}" {% if lesson and lesson.student_id == s.id %}selected{% endif %}>{{ s.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Статус</label>
+        <select class="form-control" name="status">
+          {% for st in ['planned', 'done', 'cancelled'] %}
+          <option value="{{ st }}" {% if lesson and lesson.status == st %}selected{% endif %}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Темы</label>
+      <div class="flex flex-wrap gap-1">
+        {% set selected = lesson.topics|map(attribute='topic_id')|list if lesson else [] %}
+        {% for t in topics %}
+        <label class="checkbox-row">
+          <input type="checkbox" name="topic_ids" value="{{ t.id }}" {% if t.id in selected %}checked{% endif %}>
+          {{ t.title }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    <label class="checkbox-row">
+      <input type="checkbox" name="is_published" {% if not lesson or lesson.is_published %}checked{% endif %}>
+      Опубликован (виден ученикам)
+    </label>
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+  </form>
+</div>
+
+{% if lesson %}
+<div class="card mt-2">
+  <h2 class="card-title">Файлы</h2>
+  <ul class="file-list">
+    {% for f in lesson.files %}
+    <li>
+      <a href="/static/uploads/{{ f.filename }}" target="_blank">{{ f.original_name }}</a>
+      <span class="text-muted text-sm">{{ (f.size_bytes / 1024)|round(1) }} КБ</span>
+    </li>
+    {% else %}
+    <li class="text-muted">Нет файлов</li>
+    {% endfor %}
+  </ul>
+  <form method="post" action="/admin/lessons/{{ lesson.id }}/upload" enctype="multipart/form-data" class="mt-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="file" name="file" required class="form-control" style="margin-bottom:.75rem">
+    <button type="submit" class="btn btn-outline btn-sm">Загрузить</button>
+  </form>
+</div>
+
+{% if feedbacks is defined and feedbacks %}
+<div class="card mt-2">
+  <h2 class="card-title">Обратная связь</h2>
+  <ul class="file-list">
+    {% for fb in feedbacks %}
+    <li>
+      <span class="badge badge-info">{{ fb.difficulty }}</span>
+      {{ fb.comment or '' }}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

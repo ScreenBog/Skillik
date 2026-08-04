@@ -1,0 +1,15 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Ученик создан — Skillik{% endblock %}
+{% block topbar_title %}Готово{% endblock %}
+{% block content %}
+<div class="card" style="max-width:480px">
+  <h1>Ученик создан</h1>
+  <p>Сохраните данные для передачи:</p>
+  <p><strong>Имя:</strong> {{ student.full_name }}</p>
+  <p><strong>Логин:</strong> <code>{{ student.username }}</code></p>
+  <p><strong>Пароль:</strong> <code>{{ password }}</code></p>
+  <div class="alert alert-info mt-2">Пароль больше не будет показан. При необходимости сбросьте его в карточке ученика.</div>
+  <a href="/admin/students/{{ student.id }}" class="btn btn-primary">К карточке</a>
+  <a href="/admin/students" class="btn btn-outline">К списку</a>
+</div>
+{% endblock %}

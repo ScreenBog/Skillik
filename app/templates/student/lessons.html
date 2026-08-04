@@ -1,0 +1,22 @@
+{% extends "student/base_student.html" %}
+{% block title %}Мои уроки — Skillik{% endblock %}
+{% block topbar_title %}Мои уроки{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Мои уроки</h1><p class="desc">Материалы прошедших и предстоящих занятий</p></div>
+</div>
+<div class="grid grid-2">
+  {% for l in lessons %}
+  <a href="/student/lessons/{{ l.id }}" class="card" style="display:block;color:inherit;text-decoration:none">
+    <h2 class="card-title mb-0">{{ l.title }}</h2>
+    <p class="text-sm text-muted mt-1">
+      {% if l.scheduled_at %}{{ l.scheduled_at.strftime('%d.%m.%Y') }}{% endif %}
+      · {{ l.status }}
+    </p>
+    <p class="text-sm mt-1">{{ l.description or '' }}</p>
+  </a>
+  {% else %}
+  <div class="card empty">Уроков пока нет</div>
+  {% endfor %}
+</div>
+{% endblock %}

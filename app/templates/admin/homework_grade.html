@@ -1,0 +1,56 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Проверка ДЗ — Skillik{% endblock %}
+{% block topbar_title %}Проверка{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ hw.title }}</h1>
+    <p class="desc">{{ hw.student.full_name if hw.student else '' }} · {{ hw.status.value }}</p>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2 class="card-title">Задание</h2>
+    <p>{{ hw.description or '—' }}</p>
+    {% if hw.auto_check_json %}
+    <p class="text-sm text-muted mt-2">Есть автопроверка</p>
+    {% endif %}
+  </div>
+  <div class="card">
+    <h2 class="card-title">Сдача</h2>
+    {% if hw.submission %}
+    <p><strong>Текст:</strong></p>
+    <p>{{ hw.submission.text_answer or '—' }}</p>
+    {% if hw.submission.file_path %}
+    <p class="mt-1"><a href="/static/uploads/{{ hw.submission.file_path }}" target="_blank">{{ hw.submission.original_filename or 'Файл' }}</a></p>
+    {% endif %}
+    {% if hw.submission.auto_score is not none %}
+    <p class="mt-1">Автооценка: <strong>{{ hw.submission.auto_score }}</strong> / {{ hw.max_score }}</p>
+    {% endif %}
+    {% if hw.submission.auto_answers_json %}
+    <pre class="text-sm" style="white-space:pre-wrap;background:var(--color-bg);padding:0.75rem;border-radius:8px">{{ hw.submission.auto_answers_json }}</pre>
+    {% endif %}
+    {% else %}
+    <p class="text-muted">Ещё не сдано — можно поставить оценку вручную</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card mt-2" style="max-width:480px">
+  <h2 class="card-title">Оценка</h2>
+  <form method="post" action="/admin/homework/{{ hw.id }}/grade">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-group">
+      <label>Балл (макс. {{ hw.max_score }})</label>
+      <input class="form-control" type="number" step="0.5" name="score" required
+        value="{{ hw.submission.score if hw.submission and hw.submission.score is not none else (hw.submission.auto_score if hw.submission and hw.submission.auto_score is not none else '') }}">
+    </div>
+    <div class="form-group">
+      <label>Комментарий</label>
+      <textarea class="form-control" name="teacher_comment">{{ hw.submission.teacher_comment if hw.submission and hw.submission.teacher_comment else '' }}</textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Сохранить оценку (+{{ hw.xp_reward }} XP)</button>
+  </form>
+</div>
+{% endblock %}

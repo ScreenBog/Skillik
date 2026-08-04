@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Вход — Skillik{% endblock %}
+{% block body %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="logo">Skill<span style="color:var(--color-accent)">ik</span></div>
+    <p class="subtitle">Математика и информатика · 5–7 класс</p>
+
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/login">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="form-group">
+        <label for="username">Логин</label>
+        <input class="form-control" id="username" name="username" required autocomplete="username" autofocus>
+      </div>
+      <div class="form-group">
+        <label for="password">Пароль</label>
+        <input class="form-control" type="password" id="password" name="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Войти</button>
+    </form>
+
+    <p class="text-center text-sm text-muted mt-3">
+      <a href="/parent/login">Вход для родителя</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

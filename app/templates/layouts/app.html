@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "components/icons.html" import icon %}
+
+{% block body %}
+<div class="app-shell">
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-brand">
+      Skill<span>ik</span>
+    </div>
+    <nav>
+      {% block sidebar_nav %}{% endblock %}
+    </nav>
+    <div class="sidebar-footer">
+      {{ user.full_name if user is defined else '' }}
+      <br>
+      <a href="/logout" style="color:rgba(255,255,255,.7);font-size:.85rem;">{{ icon('logout', 16) }} Выйти</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="flex items-center gap-1">
+        <button type="button" class="menu-toggle" data-menu-toggle aria-label="Меню">
+          {{ icon('menu', 24) }}
+        </button>
+        <span class="text-muted text-sm">{% block topbar_title %}{% endblock %}</span>
+      </div>
+      <div class="topbar-actions">
+        {% if user is defined and user.role and user.role.value == 'student' %}
+        <span class="xp-chip">★ {{ user.xp }} XP</span>
+        {% endif %}
+        <button type="button" class="theme-toggle" data-theme-toggle title="Тема">
+          {{ icon('sun', 18) }}
+        </button>
+        <div class="avatar {% if user is defined and user.avatar_frame and user.avatar_frame != 'none' %}frame-{{ user.avatar_frame }}{% endif %}" title="{{ user.full_name if user is defined else '' }}">
+          {{ (user.full_name[:1] if user is defined and user.full_name else '?')|upper }}
+        </div>
+      </div>
+    </header>
+    <div class="content">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% endblock %}

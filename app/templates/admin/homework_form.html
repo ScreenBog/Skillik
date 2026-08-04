@@ -1,0 +1,70 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Новое ДЗ — Skillik{% endblock %}
+{% block topbar_title %}Новое задание{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Выдать домашнее задание</h1></div></div>
+<div class="card">
+  <form method="post" action="/admin/homework/new">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-group">
+      <label>Название</label>
+      <input class="form-control" name="title" required>
+    </div>
+    <div class="form-group">
+      <label>Описание</label>
+      <textarea class="form-control" name="description"></textarea>
+    </div>
+    <div class="grid grid-2">
+      <div class="form-group">
+        <label>Срок</label>
+        <input class="form-control" type="datetime-local" name="due_at">
+      </div>
+      <div class="form-group">
+        <label>Макс. балл</label>
+        <input class="form-control" type="number" step="0.5" name="max_score" value="5">
+      </div>
+    </div>
+    <div class="grid grid-2">
+      <div class="form-group">
+        <label>XP за выполнение</label>
+        <input class="form-control" type="number" name="xp_reward" value="20">
+      </div>
+      <div class="form-group">
+        <label>Тема</label>
+        <select class="form-control" name="topic_id">
+          <option value="">—</option>
+          {% for t in topics %}
+          <option value="{{ t.id }}">{{ t.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Урок (необязательно)</label>
+      <select class="form-control" name="lesson_id">
+        <option value="">—</option>
+        {% for l in lessons %}
+        <option value="{{ l.id }}">{{ l.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Ученики</label>
+      <label class="checkbox-row"><input type="checkbox" name="all_students"> Всем ученикам</label>
+      <div class="flex flex-wrap gap-1">
+        {% for s in students %}
+        <label class="checkbox-row">
+          <input type="checkbox" name="student_ids" value="{{ s.id }}"> {{ s.full_name }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Автопроверка (JSON)</label>
+      <textarea class="form-control" name="auto_check_json" placeholder='[{"id":"1","type":"input","question":"2+2?","answer":"4","points":1}]' style="min-height:120px;font-family:monospace;font-size:.85rem"></textarea>
+      <p class="form-hint">type: input | test; для test добавьте options: ["a","b"]. Несколько ответов: "4|четыре"</p>
+    </div>
+    <button type="submit" class="btn btn-primary">Выдать</button>
+  </form>
+</div>
+{% endblock %}

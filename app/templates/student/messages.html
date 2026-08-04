@@ -1,0 +1,64 @@
+{% extends "student/base_student.html" %}
+{% block title %}Сообщения — Skillik{% endblock %}
+{% block topbar_title %}Сообщения{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Сообщения с репетитором</h1>
+  </div>
+</div>
+
+{% if request.query_params.get('ok') == 'urgent' %}
+<div class="alert alert-success">Срочный вопрос отправлен</div>
+{% endif %}
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2 class="card-title">Чат</h2>
+    <div class="chat">
+      {% for m in thread %}
+      <div class="chat-bubble {% if m.sender_id == user.id %}me{% else %}them{% endif %}">
+        {{ m.body }}
+        <div class="chat-meta">{{ m.created_at.strftime('%d.%m %H:%M') if m.created_at else '' }}</div>
+      </div>
+      {% else %}
+      <p class="text-muted text-sm">Напишите первое сообщение</p>
+      {% endfor %}
+    </div>
+    <form method="post" action="/student/messages/send" class="mt-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="form-group">
+        <textarea class="form-control" name="body" required placeholder="Сообщение..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Отправить</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">Срочный вопрос</h2>
+    <p class="text-sm text-muted mb-2">Если нужна быстрая помощь — репетитор увидит запрос в приоритете.</p>
+    <form method="post" action="/student/urgent">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="form-group">
+        <textarea class="form-control" name="body" required placeholder="Что случилось?"></textarea>
+      </div>
+      <button type="submit" class="btn btn-urgent">Отправить срочный вопрос</button>
+    </form>
+
+    {% if urgents %}
+    <h3 class="text-sm mt-3">История</h3>
+    <ul class="file-list">
+      {% for q in urgents %}
+      <li>
+        <div>
+          <span class="badge {% if q.status == 'open' %}badge-warning{% else %}badge-success{% endif %}">{{ q.status }}</span>
+          {{ q.body[:80] }}{% if q.body|length > 80 %}…{% endif %}
+          {% if q.answer %}<div class="text-sm text-muted mt-1">Ответ: {{ q.answer }}</div>{% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

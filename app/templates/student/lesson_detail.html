@@ -1,0 +1,75 @@
+{% extends "student/base_student.html" %}
+{% block title %}{{ lesson.title }} — Skillik{% endblock %}
+{% block topbar_title %}Урок{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ lesson.title }}</h1>
+    <p class="desc">
+      {% if lesson.scheduled_at %}{{ lesson.scheduled_at.strftime('%d.%m.%Y %H:%M') }} · {% endif %}
+      {{ lesson.duration_minutes }} мин
+    </p>
+  </div>
+  <a href="/student/lessons" class="btn btn-ghost btn-sm">← Назад</a>
+</div>
+
+{% if request.query_params.get('ok') %}<div class="alert alert-success">Спасибо за отзыв! +5 XP</div>{% endif %}
+
+{% if lesson.description %}
+<div class="card mb-2"><p>{{ lesson.description }}</p></div>
+{% endif %}
+
+{% if lesson.content %}
+<div class="card mb-2">
+  <h2 class="card-title">Материал</h2>
+  <div style="white-space:pre-wrap">{{ lesson.content }}</div>
+</div>
+{% endif %}
+
+{% if lesson.youtube_url %}
+<div class="card mb-2">
+  <h2 class="card-title">Видео</h2>
+  {% set yt = lesson.youtube_url %}
+  {% if 'youtu.be/' in yt %}
+    {% set vid = yt.split('youtu.be/')[1].split('?')[0] %}
+  {% elif 'v=' in yt %}
+    {% set vid = yt.split('v=')[1].split('&')[0] %}
+  {% else %}
+    {% set vid = '' %}
+  {% endif %}
+  {% if vid %}
+  <div class="video-wrap">
+    <iframe src="https://www.youtube.com/embed/{{ vid }}{% if lesson.youtube_start %}?start={{ lesson.youtube_start }}{% endif %}"
+      allowfullscreen loading="lazy" title="YouTube"></iframe>
+  </div>
+  {% else %}
+  <a href="{{ lesson.youtube_url }}" target="_blank" rel="noopener">Открыть на YouTube</a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if lesson.files %}
+<div class="card mb-2">
+  <h2 class="card-title">Файлы</h2>
+  <ul class="file-list">
+    {% for f in lesson.files %}
+    <li><a href="/static/uploads/{{ f.filename }}" target="_blank">{{ f.original_name }}</a></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2 class="card-title">Как прошёл урок?</h2>
+  {% if feedback %}
+  <p>Вы уже оценили: <span class="badge badge-info">{{ feedback.difficulty }}</span></p>
+  {% else %}
+  <form method="post" action="/student/lessons/{{ lesson.id }}/feedback" class="flex flex-wrap gap-1">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" name="difficulty" value="hard" class="btn btn-outline">Сложно</button>
+    <button type="submit" name="difficulty" value="normal" class="btn btn-outline">Нормально</button>
+    <button type="submit" name="difficulty" value="easy" class="btn btn-outline">Легко</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Сообщения — Skillik{% endblock %}
+{% block topbar_title %}Сообщения{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Сообщения</h1></div>
+</div>
+
+{% if urgent %}
+<div class="card mb-2">
+  <h2 class="card-title">Срочные вопросы</h2>
+  {% for q in urgent %}
+  <div class="mb-2" style="border-bottom:1px solid var(--color-border);padding-bottom:1rem">
+    <p><strong>{{ q.student.full_name if q.student else q.student_id }}</strong>
+      <span class="text-sm text-muted">{{ q.created_at.strftime('%d.%m %H:%M') if q.created_at else '' }}</span></p>
+    <p>{{ q.body }}</p>
+    <form method="post" action="/admin/urgent/{{ q.id }}/answer" class="mt-1">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="form-group">
+        <input class="form-control" name="answer" placeholder="Ответ..." required>
+      </div>
+      <button type="submit" class="btn btn-sm btn-accent">Ответить</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2 class="card-title">Ученики</h2>
+    <ul class="file-list">
+      {% for s in students %}
+      <li>
+        <a href="/admin/messages?with_user={{ s.id }}">{{ s.full_name }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="card">
+    <h2 class="card-title">{% if peer %}Чат: {{ peer.full_name }}{% else %}Выберите ученика{% endif %}</h2>
+    {% if peer %}
+    <div class="chat">
+      {% for m in thread %}
+      <div class="chat-bubble {% if m.sender_id == user.id %}me{% else %}them{% endif %}">
+        {{ m.body }}
+        <div class="chat-meta">{{ m.created_at.strftime('%d.%m %H:%M') if m.created_at else '' }}</div>
+      </div>
+      {% else %}
+      <p class="text-muted text-sm">Нет сообщений</p>
+      {% endfor %}
+    </div>
+    <form method="post" action="/admin/messages/send" class="mt-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="recipient_id" value="{{ peer.id }}">
+      <div class="form-group">
+        <textarea class="form-control" name="body" required placeholder="Сообщение..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Отправить</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

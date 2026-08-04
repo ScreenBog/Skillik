@@ -1,0 +1,52 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Ученики — Skillik{% endblock %}
+{% block topbar_title %}Ученики{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Ученики</h1>
+    <p class="desc">Управление аккаунтами</p>
+  </div>
+  <div class="flex gap-1">
+    <a href="/admin/export/students" class="btn btn-outline btn-sm">Экспорт CSV</a>
+    <a href="/admin/students/new" class="btn btn-accent">+ Ученик</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>Имя</th>
+          <th>Логин</th>
+          <th>XP / уровень</th>
+          <th>Статус</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td><strong>{{ s.full_name }}</strong></td>
+          <td>{{ s.username }}</td>
+          <td>{{ s.xp }} · {{ level_title(s.level_key) }}</td>
+          <td>
+            {% if s.is_blocked %}
+            <span class="badge badge-danger">блок</span>
+            {% elif s.is_active %}
+            <span class="badge badge-success">активен</span>
+            {% else %}
+            <span class="badge">неактивен</span>
+            {% endif %}
+          </td>
+          <td><a href="/admin/students/{{ s.id }}" class="btn btn-outline btn-sm">Открыть</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">Нет учеников</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "layouts/app.html" %}
+{% from "components/icons.html" import icon %}
+
+{% block sidebar_nav %}
+  <a href="/admin" class="{% if request.url.path == '/admin' or request.url.path == '/admin/' %}active{% endif %}">{{ icon('home') }} Главная</a>
+  <a href="/admin/students" class="{% if '/students' in request.url.path %}active{% endif %}">{{ icon('users') }} Ученики</a>
+  <a href="/admin/lessons" class="{% if '/lessons' in request.url.path %}active{% endif %}">{{ icon('book') }} Уроки</a>
+  <a href="/admin/homework" class="{% if '/homework' in request.url.path %}active{% endif %}">{{ icon('clipboard') }} Домашние</a>
+  <a href="/admin/topics" class="{% if '/topics' in request.url.path %}active{% endif %}">{{ icon('map') }} Темы</a>
+  <a href="/admin/calendar" class="{% if '/calendar' in request.url.path %}active{% endif %}">{{ icon('calendar') }} Календарь</a>
+  <a href="/admin/templates" class="{% if '/templates' in request.url.path %}active{% endif %}">{{ icon('book') }} Шаблоны</a>
+  <a href="/admin/shop" class="{% if '/shop' in request.url.path %}active{% endif %}">{{ icon('gift') }} Магазин</a>
+  <a href="/admin/messages" class="{% if '/messages' in request.url.path %}active{% endif %}">{{ icon('chat') }} Сообщения</a>
+  <a href="/admin/stats" class="{% if '/stats' in request.url.path %}active{% endif %}">{{ icon('chart') }} Статистика</a>
+{% endblock %}

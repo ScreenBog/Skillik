@@ -1,0 +1,76 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Админ — Skillik{% endblock %}
+{% block topbar_title %}Панель преподавателя{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Добро пожаловать</h1>
+    <p class="desc">Краткий обзор платформы Skillik</p>
+  </div>
+</div>
+
+<div class="grid grid-4 mb-2">
+  <div class="stat-card">
+    <div class="label">Ученики</div>
+    <div class="value">{{ students_n }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">На проверке</div>
+    <div class="value">{{ open_hw }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Срочные вопросы</div>
+    <div class="value">{{ urgent }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Непрочитанные</div>
+    <div class="value">{{ unread }}</div>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2 class="card-title">Ближайшие занятия</h2>
+    {% if upcoming %}
+    <ul class="file-list">
+      {% for l in upcoming %}
+      <li>
+        <div>
+          <a href="/admin/lessons/{{ l.id }}"><strong>{{ l.title }}</strong></a>
+          <div class="text-sm text-muted">
+            {% if l.scheduled_at %}{{ l.scheduled_at.strftime('%d.%m.%Y %H:%M') }}{% else %}—{% endif %}
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty">Нет запланированных уроков</p>
+    {% endif %}
+    <a href="/admin/lessons/new" class="btn btn-accent btn-sm mt-2">+ Новый урок</a>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">Последние сдачи</h2>
+    {% if recent_submissions %}
+    <ul class="file-list">
+      {% for s in recent_submissions %}
+      <li>
+        <div>
+          <a href="/admin/homework/{{ s.homework_id }}/grade"><strong>ДЗ #{{ s.homework_id }}</strong></a>
+          <div class="text-sm text-muted">{{ s.submitted_at.strftime('%d.%m %H:%M') if s.submitted_at else '' }}</div>
+        </div>
+        {% if s.score is not none %}
+        <span class="badge badge-success">{{ s.score }}</span>
+        {% else %}
+        <span class="badge badge-warning">ждёт</span>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty">Пока нет сдач</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Календарь — Skillik{% endblock %}
+{% block topbar_title %}Календарь{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Календарь занятий</h1></div></div>
+<div class="card">
+  <ul class="file-list">
+    {% for l in lessons %}
+    <li>
+      <div>
+        <a href="/admin/lessons/{{ l.id }}"><strong>{{ l.title }}</strong></a>
+        <div class="text-sm text-muted">
+          {{ l.scheduled_at.strftime('%A, %d.%m.%Y · %H:%M') if l.scheduled_at else '' }}
+          · {{ l.duration_minutes }} мин · {{ l.status }}
+        </div>
+      </div>
+    </li>
+    {% else %}
+    <li class="empty">Нет занятий с датой</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

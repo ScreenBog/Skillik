@@ -1,0 +1,102 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{{ student.full_name }} — Skillik{% endblock %}
+{% block topbar_title %}Ученик{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ student.full_name }}</h1>
+    <p class="desc">@{{ student.username }} · {{ level_title(student.level_key) }} · {{ student.xp }} XP</p>
+  </div>
+</div>
+
+{% if request.query_params.get('ok') %}
+<div class="alert alert-success">Сохранено</div>
+{% endif %}
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2 class="card-title">Редактирование</h2>
+    <form method="post" action="/admin/students/{{ student.id }}/edit">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="form-group">
+        <label>ФИО</label>
+        <input class="form-control" name="full_name" value="{{ student.full_name }}" required>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input class="form-control" name="email" value="{{ student.email or '' }}">
+      </div>
+      <div class="form-group">
+        <label>Новый пароль (если нужно сменить)</label>
+        <input class="form-control" name="new_password" type="text" autocomplete="off">
+      </div>
+      <label class="checkbox-row">
+        <input type="checkbox" name="is_blocked" {% if student.is_blocked %}checked{% endif %}>
+        Заблокирован
+      </label>
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">Стрик и прогресс</h2>
+    <p>Стрик: <strong>{{ streak.current_streak if streak else 0 }}</strong> дн.
+      (рекорд {{ streak.longest_streak if streak else 0 }})</p>
+    <h3 class="text-sm mt-2">Темы</h3>
+    {% for p in progress %}
+    <div class="mb-2">
+      <div class="flex justify-between text-sm">
+        <span>Тема #{{ p.topic_id }}</span>
+        <span>{{ '%.0f'|format(p.progress) }}%</span>
+      </div>
+      <div class="progress"><div class="progress-bar" style="width:{{ p.progress }}%"></div></div>
+    </div>
+    {% else %}
+    <p class="text-muted text-sm">Пока нет прогресса по темам</p>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card mt-2">
+  <h2 class="card-title">Привязать родителя</h2>
+  <form method="post" action="/admin/students/{{ student.id }}/parent" class="grid grid-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-group">
+      <label>Логин родителя</label>
+      <input class="form-control" name="parent_username" required>
+    </div>
+    <div class="form-group">
+      <label>Имя родителя (если новый)</label>
+      <input class="form-control" name="parent_name">
+    </div>
+    <div class="form-group">
+      <label>Пароль (если новый аккаунт)</label>
+      <input class="form-control" name="parent_password">
+    </div>
+    <div class="form-group" style="align-self:end">
+      <button type="submit" class="btn btn-outline">Привязать</button>
+    </div>
+  </form>
+</div>
+
+<div class="card mt-2">
+  <h2 class="card-title">Домашние задания</h2>
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Название</th><th>Статус</th><th>Срок</th><th></th></tr></thead>
+      <tbody>
+        {% for h in homeworks %}
+        <tr>
+          <td>{{ h.title }}</td>
+          <td><span class="badge">{{ h.status.value }}</span></td>
+          <td>{{ h.due_at.strftime('%d.%m.%Y') if h.due_at else '—' }}</td>
+          <td><a href="/admin/homework/{{ h.id }}/grade" class="btn btn-sm btn-outline">Оценить</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty">Нет заданий</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

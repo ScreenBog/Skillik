@@ -1,0 +1,41 @@
+{% extends "student/base_student.html" %}
+{% block title %}Домашние — Skillik{% endblock %}
+{% block topbar_title %}Домашние задания{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Домашние задания</h1></div>
+</div>
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr><th>Название</th><th>Статус</th><th>Срок</th><th>Оценка</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for h in items %}
+        <tr>
+          <td>{{ h.title }}</td>
+          <td>
+            {% set st = h.status.value %}
+            <span class="badge
+              {% if st == 'graded' %}badge-success
+              {% elif st == 'submitted' %}badge-info
+              {% elif st == 'overdue' %}badge-danger
+              {% else %}badge-warning{% endif %}">{{ st }}</span>
+          </td>
+          <td>{{ h.due_at.strftime('%d.%m.%Y') if h.due_at else '—' }}</td>
+          <td>
+            {% if h.submission and h.submission.score is not none %}
+            {{ h.submission.score }} / {{ h.max_score }}
+            {% else %}—{% endif %}
+          </td>
+          <td><a href="/student/homework/{{ h.id }}" class="btn btn-sm btn-outline">Открыть</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">Заданий нет</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

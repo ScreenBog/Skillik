@@ -1,0 +1,26 @@
+{% extends "student/base_student.html" %}
+{% from "components/icons.html" import icon %}
+{% block title %}Достижения — Skillik{% endblock %}
+{% block topbar_title %}Достижения{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Достижения</h1>
+    <p class="desc">Бейджи за прогресс (без рейтингов)</p>
+  </div>
+</div>
+<div class="ach-grid">
+  {% for a in all_a %}
+  <div class="ach-card {% if a.id in earned %}earned{% endif %}">
+    <div class="ach-icon">{{ icon('star', 24) }}</div>
+    <strong>{{ a.title }}</strong>
+    <p class="text-sm text-muted mt-1">{{ a.description }}</p>
+    {% if a.id in earned %}
+    <span class="badge badge-success mt-1">получено</span>
+    {% elif a.xp_bonus %}
+    <span class="text-sm text-muted">+{{ a.xp_bonus }} XP</span>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

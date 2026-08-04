@@ -1,0 +1,47 @@
+{% extends "student/base_student.html" %}
+{% block title %}Магазин — Skillik{% endblock %}
+{% block topbar_title %}Магазин{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Магазин</h1>
+    <p class="desc">Твой баланс: <strong>{{ user.xp }} XP</strong></p>
+  </div>
+</div>
+
+{% if msg == 'ok' %}<div class="alert alert-success">Покупка успешна!</div>{% endif %}
+{% if msg == 'nomoney' %}<div class="alert alert-error">Недостаточно XP</div>{% endif %}
+{% if msg == 'error' %}<div class="alert alert-error">Не удалось купить</div>{% endif %}
+
+<div class="grid grid-3">
+  {% for i in items %}
+  <div class="card">
+    <h2 class="card-title">{{ i.title }}</h2>
+    <p class="text-sm text-muted">{{ i.description or i.item_type }}</p>
+    <p class="mt-1"><span class="xp-chip">{{ i.price_xp }} XP</span></p>
+    <form method="post" action="/student/shop/{{ i.id }}/buy" class="mt-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn btn-accent btn-sm" {% if user.xp < i.price_xp %}disabled{% endif %}>Купить</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="empty">Магазин пуст</div>
+  {% endfor %}
+</div>
+
+{% if purchases %}
+<div class="card mt-2">
+  <h2 class="card-title">Покупки</h2>
+  <ul class="file-list">
+    {% for p in purchases %}
+    <li>
+      {{ p.item.title if p.item else p.item_id }}
+      <span class="text-muted text-sm">−{{ p.price_paid }} XP
+        {% if not p.is_used and p.item and p.item.item_type == 'defer_hw' %}· можно использовать{% endif %}
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

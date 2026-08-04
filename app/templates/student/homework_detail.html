@@ -1,0 +1,79 @@
+{% extends "student/base_student.html" %}
+{% block title %}{{ hw.title }} — Skillik{% endblock %}
+{% block topbar_title %}Домашнее задание{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ hw.title }}</h1>
+    <p class="desc">
+      Статус: {{ hw.status.value }}
+      {% if hw.due_at %} · до {{ hw.due_at.strftime('%d.%m.%Y %H:%M') }}{% endif %}
+      · +{{ hw.xp_reward }} XP
+    </p>
+  </div>
+  <a href="/student/homework" class="btn btn-ghost btn-sm">← Назад</a>
+</div>
+
+{% if request.query_params.get('ok') %}<div class="alert alert-success">Работа отправлена</div>{% endif %}
+{% if request.query_params.get('error') == 'no_defer' %}<div class="alert alert-error">Нет отсрочки в инвентаре. Купите в магазине.</div>{% endif %}
+
+<div class="card mb-2">
+  <h2 class="card-title">Условие</h2>
+  <p style="white-space:pre-wrap">{{ hw.description or 'См. материалы урока' }}</p>
+</div>
+
+{% if hw.submission and hw.status.value == 'graded' %}
+<div class="card mb-2">
+  <h2 class="card-title">Результат</h2>
+  <p>Оценка: <strong>{{ hw.submission.score }}</strong> / {{ hw.max_score }}</p>
+  {% if hw.submission.teacher_comment %}
+  <p class="mt-1">Комментарий: {{ hw.submission.teacher_comment }}</p>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if hw.status.value != 'graded' %}
+<div class="card">
+  <h2 class="card-title">Сдать работу</h2>
+  <form method="post" action="/student/homework/{{ hw.id }}/submit" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    {% if tasks %}
+    <h3 class="text-sm mb-2">Автопроверка</h3>
+    {% for t in tasks %}
+    <div class="form-group">
+      <label>{{ t.question }} {% if t.points %}(+{{ t.points }}){% endif %}</label>
+      {% if t.type == 'test' and t.options %}
+      <select class="form-control" name="q_{{ t.id }}">
+        <option value="">— выберите —</option>
+        {% for opt in t.options %}
+        <option value="{{ opt }}">{{ opt }}</option>
+        {% endfor %}
+      </select>
+      {% else %}
+      <input class="form-control" name="q_{{ t.id }}" autocomplete="off">
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="form-group">
+      <label>Текстовый ответ / решение</label>
+      <textarea class="form-control" name="text_answer">{{ hw.submission.text_answer if hw.submission and hw.submission.text_answer else '' }}</textarea>
+    </div>
+    <div class="form-group">
+      <label>Файл (pdf, docx, изображение)</label>
+      <input class="form-control" type="file" name="file">
+    </div>
+    <button type="submit" class="btn btn-primary">Отправить</button>
+  </form>
+
+  {% if hw.due_at %}
+  <form method="post" action="/student/homework/{{ hw.id }}/defer" class="mt-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="btn btn-outline btn-sm">Отсрочить на 1 день (из магазина)</button>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

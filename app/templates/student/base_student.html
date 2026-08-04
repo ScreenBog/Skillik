@@ -1,0 +1,14 @@
+{% extends "layouts/app.html" %}
+{% from "components/icons.html" import icon %}
+
+{% block sidebar_nav %}
+  <a href="/student" class="{% if request.url.path in ['/student', '/student/'] %}active{% endif %}">{{ icon('home') }} Главная</a>
+  <a href="/student/lessons" class="{% if '/lessons' in request.url.path %}active{% endif %}">{{ icon('book') }} Мои уроки</a>
+  <a href="/student/homework" class="{% if '/homework' in request.url.path %}active{% endif %}">{{ icon('clipboard') }} Домашние</a>
+  <a href="/student/map" class="{% if '/map' in request.url.path %}active{% endif %}">{{ icon('map') }} Карта знаний</a>
+  <a href="/student/practice" class="{% if '/practice' in request.url.path %}active{% endif %}">{{ icon('practice') }} Тренировка</a>
+  <a href="/student/achievements" class="{% if '/achievements' in request.url.path %}active{% endif %}">{{ icon('star') }} Достижения</a>
+  <a href="/student/shop" class="{% if '/shop' in request.url.path %}active{% endif %}">{{ icon('gift') }} Магазин</a>
+  <a href="/student/messages" class="{% if '/messages' in request.url.path %}active{% endif %}">{{ icon('chat') }} Сообщения</a>
+  <a href="/student/profile" class="{% if '/profile' in request.url.path %}active{% endif %}">{{ icon('cog') }} Профиль</a>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "student/base_student.html" %}
+{% block title %}Тренировка — Skillik{% endblock %}
+{% block topbar_title %}Тренировка{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Тренировка</h1>
+    <p class="desc">Выбери тему и попрактикуйся</p>
+  </div>
+</div>
+
+{% if request.query_params.get('ok') %}
+<div class="alert alert-success">Тренировка засчитана! +10 XP</div>
+{% endif %}
+
+<div class="card mb-2">
+  <form method="get" action="/student/practice" class="flex flex-wrap gap-1 items-center">
+    <select class="form-control" name="topic_id" style="max-width:320px" onchange="this.form.submit()">
+      <option value="0">— выберите тему —</option>
+      {% for t in topics %}
+      <option value="{{ t.id }}" {% if topic and topic.id == t.id %}selected{% endif %}>{{ t.title }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+{% if topic %}
+<div class="card">
+  <h2 class="card-title">{{ topic.title }}</h2>
+  <p class="text-muted text-sm mb-2">{{ topic.description or '' }}</p>
+  {% if tasks %}
+  <ul class="file-list mb-2">
+    {% for t in tasks %}
+    <li>{{ t.question }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post" action="/student/practice">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="topic_id" value="{{ topic.id }}">
+    <button type="submit" class="btn btn-accent">Завершить тренировку (+10 XP)</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "student/base_student.html" %}
+{% from "components/icons.html" import icon %}
+{% block title %}Главная — Skillik{% endblock %}
+{% block topbar_title %}Главная{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Привет, {{ user.full_name.split()[0] }}!</h1>
+    <p class="desc">{{ level_info.level_title }} · продолжай в том же духе</p>
+  </div>
+  <a href="/student/messages" class="btn btn-urgent btn-sm">Срочный вопрос</a>
+</div>
+
+<div class="grid grid-4 mb-2">
+  <div class="stat-card">
+    <div class="label">Опыт</div>
+    <div class="value">{{ user.xp }}</div>
+    <div class="hint">{{ level_info.level_title }}</div>
+    <div class="progress mt-1"><div class="progress-bar" style="width:{{ level_info.progress_pct }}%"></div></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Стрик</div>
+    <div class="value">{{ streak.current_streak if streak else 0 }}</div>
+    <div class="hint">дней подряд {% if streak and streak.freeze_available %}· заморозка есть{% endif %}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">До урока</div>
+    {% if next_lesson and next_lesson.scheduled_at %}
+    <div class="timer" data-countdown="{{ next_lesson.scheduled_at.isoformat() }}">…</div>
+    <div class="hint">{{ next_lesson.title }}</div>
+    {% else %}
+    <div class="value" style="font-size:1.1rem">—</div>
+    <div class="hint">Нет ближайших</div>
+    {% endif %}
+  </div>
+  <div class="stat-card">
+    <div class="label">Заданий в работе</div>
+    <div class="value">{{ pending_hw|length }}</div>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2 class="card-title">Задача дня</h2>
+    {% if daily %}
+    <p><strong>{{ daily.title }}</strong></p>
+    <p class="text-sm text-muted">{{ daily.description or '' }}</p>
+    <a href="/student/homework/{{ daily.id }}" class="btn btn-accent btn-sm mt-1">Открыть</a>
+    {% else %}
+    <p class="empty">Все задания сделаны — можно потренироваться</p>
+    <a href="/student/practice" class="btn btn-outline btn-sm">Тренировка</a>
+    {% endif %}
+  </div>
+  <div class="card">
+    <h2 class="card-title">Новые материалы</h2>
+    <ul class="file-list">
+      {% for l in new_lessons %}
+      <li>
+        <a href="/student/lessons/{{ l.id }}">{{ l.title }}</a>
+      </li>
+      {% else %}
+      <li class="text-muted">Пока пусто</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+{% if recent_ach %}
+<div class="card mt-2">
+  <h2 class="card-title">Недавние достижения</h2>
+  <div class="flex flex-wrap gap-2">
+    {% for ua in recent_ach %}
+    <span class="badge badge-accent">{{ ua.achievement.title if ua.achievement else '★' }}</span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

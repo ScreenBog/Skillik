@@ -1,0 +1,37 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Статистика — Skillik{% endblock %}
+{% block topbar_title %}Статистика{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Статистика</h1></div></div>
+<div class="card mb-2">
+  <h2 class="card-title">Ученики</h2>
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Имя</th><th>XP</th><th>Уровень</th></tr></thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td><a href="/admin/students/{{ s.id }}">{{ s.full_name }}</a></td>
+          <td>{{ s.xp }}</td>
+          <td>{{ level_title(s.level_key) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="card">
+  <h2 class="card-title">Средний прогресс по темам</h2>
+  {% for ts in topic_stats %}
+  <div class="mb-2">
+    <div class="flex justify-between text-sm">
+      <span>{{ ts.topic.title }}</span>
+      <span>{{ '%.0f'|format(ts.avg) }}% · n={{ ts.n }}</span>
+    </div>
+    <div class="progress"><div class="progress-bar" style="width:{{ ts.avg }}%"></div></div>
+  </div>
+  {% else %}
+  <p class="empty">Нет данных</p>
+  {% endfor %}
+</div>
+{% endblock %}
