@@ -148,5 +148,37 @@
   </ul>
 </div>
 {% endif %}
+
+<div class="card mt-2">
+  <h2 class="card-title">Посещаемость</h2>
+  <form method="post" action="/admin/lessons/{{ lesson.id }}/attendance">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr><th>Ученик</th><th>Статус</th></tr>
+        </thead>
+        <tbody>
+          {% for s in students %}
+          {% set cur = attendance.get(s.id) if attendance is defined else none %}
+          <tr>
+            <td>{{ s.full_name }}</td>
+            <td>
+              <select class="form-control" name="att_{{ s.id }}" style="max-width:160px">
+                <option value="">—</option>
+                <option value="present" {% if cur and cur.status == 'present' %}selected{% endif %}>Был</option>
+                <option value="late" {% if cur and cur.status == 'late' %}selected{% endif %}>Опоздал</option>
+                <option value="remote" {% if cur and cur.status == 'remote' %}selected{% endif %}>Онлайн</option>
+                <option value="absent" {% if cur and cur.status == 'absent' %}selected{% endif %}>Не был</option>
+              </select>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm mt-2">Сохранить посещаемость</button>
+  </form>
+</div>
 {% endif %}
 {% endblock %}

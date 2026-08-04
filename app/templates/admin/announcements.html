@@ -1,0 +1,73 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Объявления — Skillik{% endblock %}
+{% block topbar_title %}Объявления{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Объявления</h1>
+    <p class="desc">Появляются на главной у учеников и родителей</p>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2 class="card-title">Новое объявление</h2>
+    <form method="post" action="/admin/announcements/new">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="form-group">
+        <label>Заголовок</label>
+        <input class="form-control" name="title" required placeholder="Напоминание о занятии">
+      </div>
+      <div class="form-group">
+        <label>Текст</label>
+        <textarea class="form-control" name="body" required placeholder="Завтра в 16:00 урок по дробям…"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Аудитория</label>
+        <select class="form-control" name="audience">
+          <option value="all">Все</option>
+          <option value="students">Только ученики</option>
+          <option value="parents">Только родители</option>
+        </select>
+      </div>
+      <label class="checkbox-row">
+        <input type="checkbox" name="is_pinned"> Закрепить сверху
+      </label>
+      <button type="submit" class="btn btn-primary">Опубликовать</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">Лента</h2>
+    {% if items %}
+    <ul class="file-list">
+      {% for a in items %}
+      <li style="flex-direction:column;align-items:stretch;gap:.5rem">
+        <div class="flex justify-between items-center gap-1">
+          <div>
+            {% if a.is_pinned %}<span class="badge badge-accent">пин</span>{% endif %}
+            {% if not a.is_active %}<span class="badge">скрыто</span>{% endif %}
+            <strong>{{ a.title }}</strong>
+            <div class="text-sm text-muted">{{ a.created_at.strftime('%d.%m.%Y %H:%M') if a.created_at else '' }} · {{ a.audience }}</div>
+          </div>
+          <div class="flex gap-1">
+            <form method="post" action="/admin/announcements/{{ a.id }}/toggle">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button type="submit" class="btn btn-sm btn-outline">{% if a.is_active %}Скрыть{% else %}Показать{% endif %}</button>
+            </form>
+            <form method="post" action="/admin/announcements/{{ a.id }}/delete" onsubmit="return confirm('Удалить?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button type="submit" class="btn btn-sm btn-ghost">Удалить</button>
+            </form>
+          </div>
+        </div>
+        <p class="text-sm" style="white-space:pre-wrap;margin:0">{{ a.body }}</p>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state" style="border:none">Пока нет объявлений</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

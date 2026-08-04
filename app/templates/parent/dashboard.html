@@ -27,6 +27,18 @@
   </div>
 </div>
 
+{% if announcements %}
+<div class="card mb-2 announce-board">
+  <h2 class="card-title">От преподавателя</h2>
+  {% for a in announcements %}
+  <div class="announce-item {% if a.is_pinned %}is-pinned{% endif %}">
+    <strong>{% if a.is_pinned %}📌 {% endif %}{{ a.title }}</strong>
+    <p class="text-sm" style="white-space:pre-wrap;margin:.35rem 0 0">{{ a.body }}</p>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <div class="grid grid-4 mb-2">
   <div class="stat-card">
     <div class="label">Уровень</div>
@@ -87,7 +99,8 @@
         <div>
           <strong>{{ a.title }}</strong>
           <div class="text-sm text-muted">
-            {{ a.date.strftime('%d.%m.%Y') if a.date else '' }} · {{ a.status }}
+            {{ a.date.strftime('%d.%m.%Y') if a.date else '' }}
+            · {% if a.status in ['present','absent','late','remote'] %}{{ a.status|attendance }}{% else %}{{ a.status }}{% endif %}
           </div>
         </div>
       </li>
@@ -95,7 +108,7 @@
     </ul>
     {% else %}
     <div class="empty-state" style="border:none;padding:1.5rem">
-      <p>Отмеченных занятий пока нет.</p>
+      <p>Посещаемость появится, когда преподаватель отметит урок.</p>
     </div>
     {% endif %}
   </div>

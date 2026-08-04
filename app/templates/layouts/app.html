@@ -9,14 +9,14 @@
     <div class="sidebar-brand">
       Skill<span>ik</span>
     </div>
-    <nav>
+    <nav aria-label="Основное меню">
       {% block sidebar_nav %}{% endblock %}
     </nav>
     <div class="sidebar-footer">
-      <div style="margin-bottom:.5rem;font-size:.9rem;color:rgba(255,255,255,.9)">
+      <div style="margin-bottom:.35rem;font-size:.88rem;color:rgba(255,248,240,.88);font-weight:500">
         {{ user.full_name if user is defined else '' }}
       </div>
-      <a href="/logout" style="color:rgba(255,255,255,.7);font-size:.85rem;display:inline-flex;align-items:center;gap:.35rem;text-decoration:none">
+      <a href="/logout">
         {{ icon('logout', 16) }} Выйти
       </a>
     </div>
@@ -32,7 +32,7 @@
       </div>
       <div class="topbar-actions">
         {% if user is defined and user.role and user.role.value == 'student' %}
-        <span class="xp-chip" title="Опыт">★ {{ user.xp }} XP</span>
+        <span class="xp-chip" title="Опыт">{{ user.xp }} XP</span>
         {% endif %}
         <button type="button" class="theme-toggle" data-theme-toggle title="Светлая / тёмная тема" aria-label="Переключить тему">
           <span class="icon-sun">{{ icon('sun', 18) }}</span>

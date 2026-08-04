@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.config import get_settings
 from app.database import get_db
 from app.deps import require_parent
+from app.models.extras import Announcement, LessonAttendance
 from app.models.homework import Homework, HomeworkStatus
 from app.models.lesson import Lesson
 from app.models.topic import UserTopicProgress
@@ -87,19 +88,23 @@ async def parent_home(
             }
         )
 
-    # Посещаемость: уроки со статусом done + feedback как «был»
-    lessons = (
-        db.query(Lesson)
-        .filter(
-            Lesson.is_published.is_(True),
-            (Lesson.student_id.is_(None)) | (Lesson.student_id == child.id),
-            Lesson.status == "done",
-        )
-        .order_by(Lesson.scheduled_at.desc().nullslast())
+    # Посещаемость из отметок преподавателя
+    att_rows = (
+        db.query(LessonAttendance)
+        .filter(LessonAttendance.student_id == child.id)
+        .order_by(LessonAttendance.marked_at.desc())
         .limit(20)
         .all()
     )
-    attendance = [{"title": l.title, "date": l.scheduled_at, "status": "проведён"} for l in lessons]
+    attendance = []
+    for a in att_rows:
+        attendance.append(
+            {
+                "title": a.lesson.title if a.lesson else f"Урок #{a.lesson_id}",
+                "date": a.lesson.scheduled_at if a.lesson else a.marked_at,
+                "status": a.status,
+            }
+        )
 
     progress = (
         db.query(UserTopicProgress)
@@ -107,11 +112,20 @@ async def parent_home(
         .filter(UserTopicProgress.user_id == child.id)
         .all()
     )
-    # Средний прогресс по темам (для родителя)
     avg_progress = (
         round(sum(p.progress for p in progress) / len(progress), 0) if progress else 0
     )
     level_info = next_level_info(child.xp)
+    announcements = (
+        db.query(Announcement)
+        .filter(
+            Announcement.is_active.is_(True),
+            Announcement.audience.in_(["all", "parents"]),
+        )
+        .order_by(Announcement.is_pinned.desc(), Announcement.created_at.desc())
+        .limit(5)
+        .all()
+    )
 
     return templates.TemplateResponse(
         "parent/dashboard.html",
@@ -127,6 +141,7 @@ async def parent_home(
             "avg_progress": avg_progress,
             "level_info": level_info,
             "level_title": level_title(child.level_key),
+            "announcements": announcements,
             "app_name": settings.app_name,
             "csrf_token": csrf_token_for(request),
         },

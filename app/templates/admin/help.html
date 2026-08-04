@@ -1,0 +1,50 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Помощь по ДЗ — Skillik{% endblock %}
+{% block topbar_title %}Помощь{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Запросы помощи</h1>
+    <p class="desc">Ученики пишут, когда застряли на домашнем</p>
+  </div>
+</div>
+
+<div class="filter-chips">
+  <a href="/admin/help?status_filter=open" class="btn btn-sm btn-outline {% if status_filter == 'open' %}active{% endif %}">Открытые</a>
+  <a href="/admin/help?status_filter=resolved" class="btn btn-sm btn-outline {% if status_filter == 'resolved' %}active{% endif %}">Решённые</a>
+  <a href="/admin/help?status_filter=all" class="btn btn-sm btn-outline {% if status_filter == 'all' %}active{% endif %}">Все</a>
+</div>
+
+{% if items %}
+{% for h in items %}
+<div class="card mb-2">
+  <div class="flex justify-between items-center gap-1 flex-wrap">
+    <div>
+      <strong>{{ h.student.full_name if h.student else h.student_id }}</strong>
+      · <a href="/admin/homework/{{ h.homework_id }}/grade">{{ h.homework.title if h.homework else 'ДЗ #' ~ h.homework_id }}</a>
+      <div class="text-sm text-muted">{{ h.created_at.strftime('%d.%m.%Y %H:%M') if h.created_at else '' }}
+        · <span class="badge {% if h.status == 'open' %}badge-warning{% else %}badge-success{% endif %}">{{ 'открыт' if h.status == 'open' else 'решён' }}</span>
+      </div>
+    </div>
+  </div>
+  <p class="mt-1" style="white-space:pre-wrap">{{ h.message }}</p>
+  {% if h.teacher_reply %}
+  <p class="text-sm mt-1"><strong>Ответ:</strong> {{ h.teacher_reply }}</p>
+  {% endif %}
+  {% if h.status == 'open' %}
+  <form method="post" action="/admin/help/{{ h.id }}/resolve" class="mt-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-group">
+      <input class="form-control" name="teacher_reply" placeholder="Краткий ответ ученику (необязательно)">
+    </div>
+    <button type="submit" class="btn btn-accent btn-sm">Отметить решённым</button>
+  </form>
+  {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <p>Нет запросов{% if status_filter == 'open' %} — ученики пока справляются сами{% endif %}</p>
+</div>
+{% endif %}
+{% endblock %}

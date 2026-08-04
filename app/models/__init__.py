@@ -1,6 +1,7 @@
 """Модели базы данных Skillik."""
 
 from app.models.achievement import Achievement, UserAchievement
+from app.models.extras import Announcement, HelpRequest, LessonAttendance, StudentNote
 from app.models.feedback import LessonFeedback
 from app.models.homework import Homework, HomeworkSubmission
 from app.models.lesson import Lesson, LessonFile, LessonTemplate, LessonTopic
@@ -30,4 +31,8 @@ __all__ = [
     "Message",
     "UrgentQuestion",
     "LessonFeedback",
+    "Announcement",
+    "StudentNote",
+    "LessonAttendance",
+    "HelpRequest",
 ]

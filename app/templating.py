@@ -44,6 +44,8 @@ FLASH_OK: dict[str, str] = {
     "freeze": "Стрик заморожен на сегодня",
     "practice": "Тренировка засчитана! +10 XP",
     "submitted": "Работа отправлена на проверку",
+    "help": "Запрос помощи отправлен преподавателю",
+    "attendance": "Посещаемость сохранена",
     "ok": "Готово",
 }
 
@@ -54,6 +56,14 @@ FLASH_ERR: dict[str, str] = {
     "nomoney": "Недостаточно XP",
     "error": "Не удалось выполнить действие",
     "no_students": "Выберите хотя бы одного ученика или «Всем»",
+    "empty": "Заполните текст",
+}
+
+ATTENDANCE: dict[str, str] = {
+    "present": "Был",
+    "absent": "Не был",
+    "late": "Опоздал",
+    "remote": "Онлайн",
 }
 
 
@@ -68,6 +78,10 @@ def mastery_label(value: str | None) -> str:
 
 def lesson_status_label(value: str | None) -> str:
     return LESSON_STATUS.get(value or "", value or "—")
+
+
+def attendance_label(value: str | None) -> str:
+    return ATTENDANCE.get(value or "", value or "—")
 
 
 def flash_messages(request) -> list[dict[str, str]]:
@@ -115,11 +129,13 @@ def setup_templates(templates: Jinja2Templates) -> Jinja2Templates:
     templates.env.filters["hw_status"] = hw_status_label
     templates.env.filters["mastery"] = mastery_label
     templates.env.filters["lesson_status"] = lesson_status_label
+    templates.env.filters["attendance"] = attendance_label
     templates.env.filters["weekday_ru"] = weekday_ru
     templates.env.filters["avatar_emoji"] = avatar_emoji
     templates.env.globals["flash_messages"] = flash_messages
     templates.env.globals["HW_STATUS"] = HW_STATUS
     templates.env.globals["MASTERY"] = MASTERY
+    templates.env.globals["ATTENDANCE"] = ATTENDANCE
     templates.env.globals["avatar_emoji"] = avatar_emoji
     return templates
 

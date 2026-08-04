@@ -19,8 +19,9 @@
     <div class="value">{{ open_hw }}</div>
   </div>
   <div class="stat-card">
-    <div class="label">Срочные вопросы</div>
-    <div class="value">{{ urgent }}</div>
+    <div class="label">Срочные / помощь</div>
+    <div class="value">{{ urgent }}{% if help_n %}<span class="text-sm"> / {{ help_n }}</span>{% endif %}</div>
+    <div class="hint"><a href="/admin/help">запросы помощи</a></div>
   </div>
   <div class="stat-card">
     <div class="label">Непрочитанные</div>
@@ -74,5 +75,28 @@
     <p class="empty">Пока нет сдач</p>
     {% endif %}
   </div>
+</div>
+
+{% if open_help %}
+<div class="card mt-2">
+  <h2 class="card-title">Нужна помощь по ДЗ</h2>
+  <ul class="file-list">
+    {% for h in open_help %}
+    <li>
+      <div>
+        <strong>{{ h.student.full_name if h.student else h.student_id }}</strong>
+        <div class="text-sm text-muted">{{ h.message[:100] }}{% if h.message|length > 100 %}…{% endif %}</div>
+      </div>
+      <a href="/admin/help" class="btn btn-sm btn-outline">Открыть</a>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="flex flex-wrap gap-1 mt-2">
+  <a href="/admin/announcements" class="btn btn-outline btn-sm">+ Объявление</a>
+  <a href="/admin/homework/new" class="btn btn-outline btn-sm">+ ДЗ / JSON</a>
+  <a href="/admin/help" class="btn btn-outline btn-sm">Помощь по ДЗ</a>
 </div>
 {% endblock %}

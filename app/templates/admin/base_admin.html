@@ -6,6 +6,8 @@
   <a href="/admin/students" class="{% if '/students' in request.url.path %}active{% endif %}">{{ icon('users') }} Ученики</a>
   <a href="/admin/lessons" class="{% if '/lessons' in request.url.path %}active{% endif %}">{{ icon('book') }} Уроки</a>
   <a href="/admin/homework" class="{% if '/homework' in request.url.path %}active{% endif %}">{{ icon('clipboard') }} Домашние</a>
+  <a href="/admin/help" class="{% if '/help' in request.url.path %}active{% endif %}">{{ icon('chat') }} Помощь по ДЗ</a>
+  <a href="/admin/announcements" class="{% if '/announcements' in request.url.path %}active{% endif %}">{{ icon('star') }} Объявления</a>
   <a href="/admin/topics" class="{% if '/topics' in request.url.path %}active{% endif %}">{{ icon('map') }} Темы</a>
   <a href="/admin/calendar" class="{% if '/calendar' in request.url.path %}active{% endif %}">{{ icon('calendar') }} Календарь</a>
   <a href="/admin/templates" class="{% if '/templates' in request.url.path %}active{% endif %}">{{ icon('book') }} Шаблоны</a>

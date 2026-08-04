@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.config import get_settings
 from app.database import get_db
 from app.deps import require_admin, verify_csrf_form
+from app.models.extras import Announcement, HelpRequest, LessonAttendance
 from app.models.feedback import LessonFeedback
 from app.models.homework import Homework, HomeworkStatus, HomeworkSubmission
 from app.models.lesson import Lesson, LessonFile, LessonTemplate, LessonTopic
@@ -116,6 +117,7 @@ async def dashboard(
     students_n = db.query(User).filter(User.role == UserRole.STUDENT).count()
     open_hw = db.query(Homework).filter(Homework.status == HomeworkStatus.SUBMITTED).count()
     urgent = db.query(UrgentQuestion).filter(UrgentQuestion.status == "open").count()
+    help_n = db.query(HelpRequest).filter(HelpRequest.status == "open").count()
     unread = (
         db.query(Message)
         .filter(Message.recipient_id == admin.id, Message.is_read.is_(False))
@@ -134,6 +136,13 @@ async def dashboard(
         .limit(8)
         .all()
     )
+    open_help = (
+        db.query(HelpRequest)
+        .filter(HelpRequest.status == "open")
+        .order_by(HelpRequest.created_at.desc())
+        .limit(6)
+        .all()
+    )
     return templates.TemplateResponse(
         "admin/dashboard.html",
         _ctx(
@@ -142,9 +151,11 @@ async def dashboard(
             students_n=students_n,
             open_hw=open_hw,
             urgent=urgent,
+            help_n=help_n,
             unread=unread,
             upcoming=upcoming,
             recent_submissions=recent_submissions,
+            open_help=open_help,
         ),
     )
 
@@ -428,6 +439,10 @@ async def lesson_detail(
     topics = db.query(Topic).filter(Topic.parent_id.isnot(None)).order_by(Topic.title).all()
     students = db.query(User).filter(User.role == UserRole.STUDENT).all()
     feedbacks = db.query(LessonFeedback).filter(LessonFeedback.lesson_id == lesson_id).all()
+    attendance = {
+        a.student_id: a
+        for a in db.query(LessonAttendance).filter(LessonAttendance.lesson_id == lesson_id).all()
+    }
     return templates.TemplateResponse(
         "admin/lesson_form.html",
         _ctx(
@@ -436,6 +451,7 @@ async def lesson_detail(
             lesson=lesson,
             topics=topics,
             students=students,
+            attendance=attendance,
             templates_list=[],
             feedbacks=feedbacks,
         ),
@@ -1027,3 +1043,150 @@ async def template_create(
     )
     db.commit()
     return RedirectResponse("/admin/templates?ok=1", status_code=302)
+
+
+# ——— Объявления ———
+
+
+@router.get("/announcements", response_class=HTMLResponse)
+async def announcements_list(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+):
+    items = db.query(Announcement).order_by(Announcement.is_pinned.desc(), Announcement.created_at.desc()).all()
+    return templates.TemplateResponse(
+        "admin/announcements.html",
+        _ctx(request, admin, items=items),
+    )
+
+
+@router.post("/announcements/new")
+async def announcement_create(
+    db: Annotated[Session, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+    title: Annotated[str, Form()],
+    body: Annotated[str, Form()],
+    audience: Annotated[str, Form()] = "all",
+    is_pinned: Annotated[str, Form()] = "",
+    _: Annotated[None, Depends(verify_csrf_form)] = None,
+):
+    if audience not in ("all", "students", "parents"):
+        audience = "all"
+    db.add(
+        Announcement(
+            title=title.strip(),
+            body=body.strip(),
+            audience=audience,
+            is_pinned=is_pinned == "on",
+            created_by=admin.id,
+        )
+    )
+    db.commit()
+    return RedirectResponse("/admin/announcements?ok=1", status_code=302)
+
+
+@router.post("/announcements/{aid}/toggle")
+async def announcement_toggle(
+    aid: int,
+    db: Annotated[Session, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+    _: Annotated[None, Depends(verify_csrf_form)] = None,
+):
+    a = db.get(Announcement, aid)
+    if a:
+        a.is_active = not a.is_active
+        db.commit()
+    return RedirectResponse("/admin/announcements", status_code=302)
+
+
+@router.post("/announcements/{aid}/delete")
+async def announcement_delete(
+    aid: int,
+    db: Annotated[Session, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+    _: Annotated[None, Depends(verify_csrf_form)] = None,
+):
+    a = db.get(Announcement, aid)
+    if a:
+        db.delete(a)
+        db.commit()
+    return RedirectResponse("/admin/announcements?ok=1", status_code=302)
+
+
+# ——— Посещаемость ———
+
+
+@router.post("/lessons/{lesson_id}/attendance")
+async def lesson_attendance_save(
+    lesson_id: int,
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+    _: Annotated[None, Depends(verify_csrf_form)] = None,
+):
+    lesson = db.get(Lesson, lesson_id)
+    if not lesson:
+        return RedirectResponse("/admin/lessons", status_code=302)
+    form = await request.form()
+    students = db.query(User).filter(User.role == UserRole.STUDENT, User.is_blocked.is_(False)).all()
+    for s in students:
+        key = f"att_{s.id}"
+        status = str(form.get(key, "") or "").strip()
+        if status not in ("present", "absent", "late", "remote", ""):
+            continue
+        if not status:
+            continue
+        row = (
+            db.query(LessonAttendance)
+            .filter(
+                LessonAttendance.lesson_id == lesson_id,
+                LessonAttendance.student_id == s.id,
+            )
+            .first()
+        )
+        if not row:
+            row = LessonAttendance(lesson_id=lesson_id, student_id=s.id)
+            db.add(row)
+        row.status = status
+        row.marked_by = admin.id
+        row.marked_at = datetime.utcnow()
+    db.commit()
+    return RedirectResponse(f"/admin/lessons/{lesson_id}?ok=attendance", status_code=302)
+
+
+# ——— Запросы помощи по ДЗ ———
+
+
+@router.get("/help", response_class=HTMLResponse)
+async def help_list(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+    status_filter: str = "open",
+):
+    q = db.query(HelpRequest).order_by(HelpRequest.created_at.desc())
+    if status_filter in ("open", "resolved"):
+        q = q.filter(HelpRequest.status == status_filter)
+    items = q.limit(80).all()
+    return templates.TemplateResponse(
+        "admin/help.html",
+        _ctx(request, admin, items=items, status_filter=status_filter),
+    )
+
+
+@router.post("/help/{hid}/resolve")
+async def help_resolve(
+    hid: int,
+    db: Annotated[Session, Depends(get_db)],
+    admin: Annotated[User, Depends(require_admin)],
+    teacher_reply: Annotated[str, Form()] = "",
+    _: Annotated[None, Depends(verify_csrf_form)] = None,
+):
+    hr = db.get(HelpRequest, hid)
+    if hr:
+        hr.status = "resolved"
+        hr.teacher_reply = teacher_reply.strip() or None
+        hr.resolved_at = datetime.utcnow()
+        db.commit()
+    return RedirectResponse("/admin/help?ok=1", status_code=302)

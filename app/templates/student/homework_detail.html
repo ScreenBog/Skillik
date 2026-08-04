@@ -28,6 +28,29 @@
 </div>
 {% endif %}
 
+<div class="card mb-2">
+  <h2 class="card-title">Нужна помощь?</h2>
+  {% if help_req and help_req.status == 'open' %}
+  <p class="text-sm">Запрос уже отправлен:
+    <em>{{ help_req.message }}</em>
+  </p>
+  <p class="text-sm text-muted">Преподаватель увидит его в разделе «Помощь по ДЗ».</p>
+  {% elif help_req and help_req.status == 'resolved' %}
+  <p class="text-sm"><span class="badge badge-success">отвечено</span>
+    {% if help_req.teacher_reply %}{{ help_req.teacher_reply }}{% else %}Преподаватель отметил, что помог.{% endif %}
+  </p>
+  {% endif %}
+  {% if not help_req or help_req.status != 'open' %}
+  <form method="post" action="/student/homework/{{ hw.id }}/help">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-group">
+      <textarea class="form-control" name="message" required placeholder="Где застрял? Что уже пробовал?"></textarea>
+    </div>
+    <button type="submit" class="btn btn-outline btn-sm">Попросить помощь</button>
+  </form>
+  {% endif %}
+</div>
+
 {% if hw.status.value != 'graded' %}
 <div class="card">
   <h2 class="card-title">Сдать работу</h2>

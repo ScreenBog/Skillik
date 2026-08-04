@@ -11,6 +11,19 @@
   <a href="/student/messages" class="btn btn-urgent btn-sm">Срочный вопрос</a>
 </div>
 
+{% if announcements %}
+<div class="card mb-2 announce-board">
+  <h2 class="card-title">От преподавателя</h2>
+  {% for a in announcements %}
+  <div class="announce-item {% if a.is_pinned %}is-pinned{% endif %}">
+    <strong>{% if a.is_pinned %}📌 {% endif %}{{ a.title }}</strong>
+    <p class="text-sm" style="white-space:pre-wrap;margin:.35rem 0 0">{{ a.body }}</p>
+    <div class="text-sm text-muted mt-1">{{ a.created_at.strftime('%d.%m.%Y') if a.created_at else '' }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <div class="grid grid-4 mb-2">
   <div class="stat-card">
     <div class="label">Опыт</div>
@@ -41,7 +54,7 @@
 
 <div class="grid grid-2">
   <div class="card">
-    <h2 class="card-title">Задача дня</h2>
+    <h2 class="card-title">Домашнее на сегодня</h2>
     {% if daily %}
     <p><strong>{{ daily.title }}</strong></p>
     <p class="text-sm text-muted">{{ daily.description or '' }}</p>
@@ -54,6 +67,20 @@
     {% endif %}
   </div>
   <div class="card">
+    <h2 class="card-title">Мини-челлендж дня</h2>
+    {% if challenge and challenge.task %}
+    <p class="text-sm text-muted">Из «{{ challenge.homework_title }}»</p>
+    <p><strong>{{ challenge.task.question }}</strong></p>
+    <p class="text-sm text-muted mt-1">Потренируйся в голове или в блокноте — ответ на уроке / в ДЗ</p>
+    <a href="/student/homework/{{ challenge.homework_id }}" class="btn btn-outline btn-sm mt-1">К заданию</a>
+    {% else %}
+    <p class="text-muted text-sm">Когда появятся ДЗ с автопроверкой — здесь будет вопрос дня.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid grid-2 mt-2">
+  <div class="card">
     <h2 class="card-title">Новые материалы</h2>
     <ul class="file-list">
       {% for l in new_lessons %}
@@ -64,6 +91,14 @@
       <li class="text-muted">Пока пусто</li>
       {% endfor %}
     </ul>
+  </div>
+  <div class="card">
+    <h2 class="card-title">Быстрые действия</h2>
+    <div class="flex flex-wrap gap-1">
+      <a href="/student/notes" class="btn btn-outline btn-sm">Блокнот</a>
+      <a href="/student/practice" class="btn btn-outline btn-sm">Тренировка</a>
+      <a href="/student/map" class="btn btn-outline btn-sm">Карта знаний</a>
+    </div>
   </div>
 </div>
 

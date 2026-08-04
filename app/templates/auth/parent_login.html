@@ -3,7 +3,7 @@
 {% block body %}
 <div class="auth-page">
   <div class="auth-card">
-    <div class="logo">Skill<span style="color:var(--color-accent)">ik</span></div>
+    <div class="logo">Skill<span>ik</span></div>
     <p class="subtitle">Кабинет родителя</p>
 
     {% if error %}
@@ -23,7 +23,7 @@
       <button type="submit" class="btn btn-accent btn-block">Войти</button>
     </form>
 
-    <p class="text-center text-sm text-muted mt-3">
+    <p class="text-center text-sm text-muted mt-3" style="margin-bottom:0">
       <a href="/login">Вход для ученика и преподавателя</a>
     </p>
   </div>
