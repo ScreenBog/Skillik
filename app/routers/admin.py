@@ -10,8 +10,7 @@ from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.config import get_settings
 from app.database import get_db
@@ -28,9 +27,10 @@ from app.deps import csrf_token_for
 from app.security import hash_password, sanitize_filename
 from app.services.export import export_homework_csv, export_students_csv
 from app.services.gamification import add_xp, level_title
+from app.templating import get_templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-templates = Jinja2Templates(directory="app/templates")
+templates = get_templates()
 settings = get_settings()
 
 
@@ -197,6 +197,7 @@ async def student_detail(
     )
     progress = (
         db.query(UserTopicProgress)
+        .options(joinedload(UserTopicProgress.topic))
         .filter(UserTopicProgress.user_id == student_id)
         .all()
     )

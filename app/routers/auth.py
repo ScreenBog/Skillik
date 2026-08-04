@@ -7,7 +7,6 @@ from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, Form, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -20,9 +19,10 @@ from app.security import (
     verify_password,
 )
 from app.services.gamification import record_activity
+from app.templating import get_templates
 
 router = APIRouter(tags=["auth"])
-templates = Jinja2Templates(directory="app/templates")
+templates = get_templates()
 settings = get_settings()
 
 

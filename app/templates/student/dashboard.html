@@ -47,8 +47,10 @@
     <p class="text-sm text-muted">{{ daily.description or '' }}</p>
     <a href="/student/homework/{{ daily.id }}" class="btn btn-accent btn-sm mt-1">Открыть</a>
     {% else %}
-    <p class="empty">Все задания сделаны — можно потренироваться</p>
-    <a href="/student/practice" class="btn btn-outline btn-sm">Тренировка</a>
+    <div class="empty-state" style="border:none;padding:1rem">
+      <p>Все задания сделаны — можно потренироваться</p>
+      <a href="/student/practice" class="btn btn-outline btn-sm">Тренировка</a>
+    </div>
     {% endif %}
   </div>
   <div class="card">

@@ -6,8 +6,6 @@
   <div><h1>Темы</h1><p class="desc">Структура карты знаний</p></div>
 </div>
 
-{% if request.query_params.get('ok') %}<div class="alert alert-success">Тема добавлена</div>{% endif %}
-
 {% for root in roots %}
 <div class="card mb-2">
   <h2 class="card-title">{{ root.title }} <span class="badge">{{ root.subject }}</span></h2>

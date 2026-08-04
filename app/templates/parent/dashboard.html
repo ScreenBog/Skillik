@@ -13,9 +13,10 @@
 
 {% block content %}
 {% if not child %}
-<div class="card empty">
+<div class="empty-state">
+  <div class="empty-icon">👨‍👩‍👧</div>
   <p>К вашему аккаунту пока не привязан ученик.</p>
-  <p class="text-sm text-muted">Обратитесь к преподавателю.</p>
+  <p class="text-sm">Обратитесь к преподавателю — он выдаст логин и свяжет профиль.</p>
 </div>
 {% else %}
 
@@ -36,21 +37,23 @@
   <div class="stat-card">
     <div class="label">Стрик</div>
     <div class="value">{{ streak.current_streak if streak else 0 }}</div>
-    <div class="hint">рекорд {{ streak.longest_streak if streak else 0 }}</div>
+    <div class="hint">рекорд {{ streak.longest_streak if streak else 0 }} дн.</div>
   </div>
   <div class="stat-card">
     <div class="label">Оценок</div>
     <div class="value">{{ grades|length }}</div>
   </div>
   <div class="stat-card">
-    <div class="label">Занятий</div>
-    <div class="value">{{ attendance|length }}</div>
+    <div class="label">Средний прогресс</div>
+    <div class="value">{{ '%.0f'|format(avg_progress) }}%</div>
+    <div class="hint">по изученным темам</div>
   </div>
 </div>
 
 <div class="grid grid-2">
   <div class="card">
     <h2 class="card-title">Оценки</h2>
+    {% if grades %}
     <div class="table-wrap">
       <table class="data">
         <thead><tr><th>Работа</th><th>Оценка</th></tr></thead>
@@ -64,16 +67,20 @@
               {% else %}—{% endif %}
             </td>
           </tr>
-          {% else %}
-          <tr><td colspan="2" class="empty">Пока нет оценок</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+    {% else %}
+    <div class="empty-state" style="border:none;padding:1.5rem">
+      <p>Пока нет оценок — они появятся после проверки домашних заданий.</p>
+    </div>
+    {% endif %}
   </div>
 
   <div class="card">
     <h2 class="card-title">Посещаемость</h2>
+    {% if attendance %}
     <ul class="file-list">
       {% for a in attendance %}
       <li>
@@ -84,26 +91,36 @@
           </div>
         </div>
       </li>
-      {% else %}
-      <li class="text-muted">Нет отмеченных занятий</li>
       {% endfor %}
     </ul>
+    {% else %}
+    <div class="empty-state" style="border:none;padding:1.5rem">
+      <p>Отмеченных занятий пока нет.</p>
+    </div>
+    {% endif %}
   </div>
 </div>
 
 <div class="card mt-2">
   <h2 class="card-title">Прогресс по темам</h2>
+  {% if progress %}
   {% for p in progress %}
   <div class="mb-2">
     <div class="flex justify-between text-sm">
-      <span>Тема #{{ p.topic_id }} · {{ p.mastery }}</span>
+      <span>
+        <strong>{{ p.topic.title if p.topic else 'Тема' }}</strong>
+        <span class="text-muted"> · {{ p.mastery|mastery }}</span>
+      </span>
       <span>{{ '%.0f'|format(p.progress) }}%</span>
     </div>
     <div class="progress"><div class="progress-bar" style="width:{{ p.progress }}%"></div></div>
   </div>
-  {% else %}
-  <p class="empty">Прогресс по темам появится после занятий</p>
   {% endfor %}
+  {% else %}
+  <div class="empty-state" style="border:none;padding:1.5rem">
+    <p>Прогресс по темам появится после уроков, тренировок и домашних заданий.</p>
+  </div>
+  {% endif %}
 </div>
 
 {% endif %}

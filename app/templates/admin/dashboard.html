@@ -45,7 +45,9 @@
       {% endfor %}
     </ul>
     {% else %}
-    <p class="empty">Нет запланированных уроков</p>
+    <div class="empty-state" style="border:none;padding:1.25rem">
+      <p>Нет запланированных уроков</p>
+    </div>
     {% endif %}
     <a href="/admin/lessons/new" class="btn btn-accent btn-sm mt-2">+ Новый урок</a>
   </div>

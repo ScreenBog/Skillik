@@ -10,8 +10,7 @@ from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.config import get_settings
 from app.database import get_db
@@ -34,9 +33,10 @@ from app.services.gamification import (
     record_activity,
 )
 from app.services.homework_check import check_answers, tasks_to_public
+from app.templating import get_templates
 
 router = APIRouter(prefix="/student", tags=["student"])
-templates = Jinja2Templates(directory="app/templates")
+templates = get_templates()
 settings = get_settings()
 
 
@@ -307,7 +307,7 @@ async def homework_submit(
 
     record_activity(db, student)
     db.commit()
-    return RedirectResponse(f"/student/homework/{hw_id}?ok=1", status_code=302)
+    return RedirectResponse(f"/student/homework/{hw_id}?ok=submitted", status_code=302)
 
 
 @router.post("/homework/{hw_id}/defer")
@@ -425,7 +425,7 @@ async def practice_submit(
         add_xp(db, student, 10, "practice", topic.slug)
         record_activity(db, student)
         db.commit()
-    return RedirectResponse(f"/student/practice?topic_id={topic_id}&ok=1", status_code=302)
+    return RedirectResponse(f"/student/practice?topic_id={topic_id}&ok=practice", status_code=302)
 
 
 @router.get("/achievements", response_class=HTMLResponse)

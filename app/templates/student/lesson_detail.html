@@ -13,8 +13,6 @@
   <a href="/student/lessons" class="btn btn-ghost btn-sm">← Назад</a>
 </div>
 
-{% if request.query_params.get('ok') %}<div class="alert alert-success">Спасибо за отзыв! +5 XP</div>{% endif %}
-
 {% if lesson.description %}
 <div class="card mb-2"><p>{{ lesson.description }}</p></div>
 {% endif %}

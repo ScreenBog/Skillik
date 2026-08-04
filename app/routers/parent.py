@@ -5,9 +5,8 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from fastapi.responses import HTMLResponse
+from sqlalchemy.orm import Session, joinedload
 
 from app.config import get_settings
 from app.database import get_db
@@ -19,9 +18,10 @@ from app.models.user import ParentStudent, User
 from app.models.xp import Streak
 from app.deps import csrf_token_for
 from app.services.gamification import level_title, next_level_info
+from app.templating import get_templates
 
 router = APIRouter(prefix="/parent", tags=["parent"])
-templates = Jinja2Templates(directory="app/templates")
+templates = get_templates()
 settings = get_settings()
 
 
@@ -103,8 +103,13 @@ async def parent_home(
 
     progress = (
         db.query(UserTopicProgress)
+        .options(joinedload(UserTopicProgress.topic))
         .filter(UserTopicProgress.user_id == child.id)
         .all()
+    )
+    # Средний прогресс по темам (для родителя)
+    avg_progress = (
+        round(sum(p.progress for p in progress) / len(progress), 0) if progress else 0
     )
     level_info = next_level_info(child.xp)
 
@@ -119,6 +124,7 @@ async def parent_home(
             "grades": grades,
             "attendance": attendance,
             "progress": progress,
+            "avg_progress": avg_progress,
             "level_info": level_info,
             "level_title": level_title(child.level_key),
             "app_name": settings.app_name,

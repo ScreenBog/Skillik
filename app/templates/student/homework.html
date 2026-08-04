@@ -3,9 +3,13 @@
 {% block topbar_title %}Домашние задания{% endblock %}
 {% block content %}
 <div class="page-header">
-  <div><h1>Домашние задания</h1></div>
+  <div>
+    <h1>Домашние задания</h1>
+    <p class="desc">Сдавай работы и получай XP</p>
+  </div>
 </div>
 <div class="card">
+  {% if items %}
   <div class="table-wrap">
     <table class="data">
       <thead>
@@ -21,7 +25,7 @@
               {% if st == 'graded' %}badge-success
               {% elif st == 'submitted' %}badge-info
               {% elif st == 'overdue' %}badge-danger
-              {% else %}badge-warning{% endif %}">{{ st }}</span>
+              {% else %}badge-warning{% endif %}">{{ h.status|hw_status }}</span>
           </td>
           <td>{{ h.due_at.strftime('%d.%m.%Y') if h.due_at else '—' }}</td>
           <td>
@@ -31,11 +35,16 @@
           </td>
           <td><a href="/student/homework/{{ h.id }}" class="btn btn-sm btn-outline">Открыть</a></td>
         </tr>
-        {% else %}
-        <tr><td colspan="5" class="empty">Заданий нет</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+  {% else %}
+  <div class="empty-state" style="border:none">
+    <div class="empty-icon">✅</div>
+    <p>Пока нет домашних заданий. Загляни в «Тренировку» или «Карту знаний».</p>
+    <a href="/student/practice" class="btn btn-outline btn-sm">К тренировке</a>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

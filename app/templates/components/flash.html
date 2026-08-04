@@ -1,0 +1,8 @@
+{% macro render_flash(request) %}
+  {% for m in flash_messages(request) %}
+  <div class="alert alert-{{ m.type }} alert-dismissible" role="status" data-auto-dismiss="6000">
+    <span>{{ m.text }}</span>
+    <button type="button" class="alert-close" data-dismiss-alert aria-label="Закрыть">×</button>
+  </div>
+  {% endfor %}
+{% endmacro %}

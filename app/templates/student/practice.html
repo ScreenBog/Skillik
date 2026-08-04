@@ -9,10 +9,6 @@
   </div>
 </div>
 
-{% if request.query_params.get('ok') %}
-<div class="alert alert-success">Тренировка засчитана! +10 XP</div>
-{% endif %}
-
 <div class="card mb-2">
   <form method="get" action="/student/practice" class="flex flex-wrap gap-1 items-center">
     <select class="form-control" name="topic_id" style="max-width:320px" onchange="this.form.submit()">

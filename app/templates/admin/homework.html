@@ -5,21 +5,23 @@
 <div class="page-header">
   <div>
     <h1>Домашние задания</h1>
+    <p class="desc">Выдача, проверка и оценки</p>
   </div>
-  <div class="flex gap-1">
+  <div class="flex gap-1 flex-wrap">
     <a href="/admin/export/homework" class="btn btn-outline btn-sm">Экспорт</a>
     <a href="/admin/homework/new" class="btn btn-accent">+ Задание</a>
   </div>
 </div>
 
-<div class="flex gap-1 mb-2 flex-wrap">
-  <a href="/admin/homework" class="btn btn-sm btn-outline">Все</a>
-  <a href="/admin/homework?status_filter=submitted" class="btn btn-sm btn-outline">Сданы</a>
-  <a href="/admin/homework?status_filter=graded" class="btn btn-sm btn-outline">Оценены</a>
-  <a href="/admin/homework?status_filter=assigned" class="btn btn-sm btn-outline">Выданы</a>
+<div class="filter-chips">
+  <a href="/admin/homework" class="btn btn-sm btn-outline {% if not status_filter %}active{% endif %}">Все</a>
+  <a href="/admin/homework?status_filter=submitted" class="btn btn-sm btn-outline {% if status_filter == 'submitted' %}active{% endif %}">На проверке</a>
+  <a href="/admin/homework?status_filter=graded" class="btn btn-sm btn-outline {% if status_filter == 'graded' %}active{% endif %}">Оценены</a>
+  <a href="/admin/homework?status_filter=assigned" class="btn btn-sm btn-outline {% if status_filter == 'assigned' %}active{% endif %}">Выданы</a>
 </div>
 
 <div class="card">
+  {% if items %}
   <div class="table-wrap">
     <table class="data">
       <thead>
@@ -30,16 +32,29 @@
         <tr>
           <td>{{ h.title }}</td>
           <td>{{ h.student.full_name if h.student else h.student_id }}</td>
-          <td><span class="badge {% if h.status.value == 'submitted' %}badge-warning{% elif h.status.value == 'graded' %}badge-success{% endif %}">{{ h.status.value }}</span></td>
+          <td>
+            <span class="badge
+              {% if h.status.value == 'submitted' %}badge-warning
+              {% elif h.status.value == 'graded' %}badge-success
+              {% elif h.status.value == 'overdue' %}badge-danger
+              {% else %}badge-info{% endif %}">{{ h.status|hw_status }}</span>
+          </td>
           <td>{{ h.due_at.strftime('%d.%m.%Y') if h.due_at else '—' }}</td>
           <td>{{ h.submission.score if h.submission and h.submission.score is not none else '—' }}</td>
-          <td><a href="/admin/homework/{{ h.id }}/grade" class="btn btn-sm btn-outline">Проверить</a></td>
+          <td><a href="/admin/homework/{{ h.id }}/grade" class="btn btn-sm btn-outline">
+            {% if h.status.value == 'submitted' %}Проверить{% else %}Открыть{% endif %}
+          </a></td>
         </tr>
-        {% else %}
-        <tr><td colspan="6" class="empty">Нет заданий</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+  {% else %}
+  <div class="empty-state" style="border:none">
+    <div class="empty-icon">📝</div>
+    <p>Заданий пока нет. Выдайте первое домашнее задание ученикам.</p>
+    <a href="/admin/homework/new" class="btn btn-accent btn-sm">+ Задание</a>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

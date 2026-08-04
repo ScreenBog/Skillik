@@ -9,10 +9,6 @@
   </div>
 </div>
 
-{% if request.query_params.get('ok') %}
-<div class="alert alert-success">Сохранено</div>
-{% endif %}
-
 <div class="grid grid-2">
   <div class="card">
     <h2 class="card-title">Редактирование</h2>
@@ -46,7 +42,7 @@
     {% for p in progress %}
     <div class="mb-2">
       <div class="flex justify-between text-sm">
-        <span>Тема #{{ p.topic_id }}</span>
+        <span>{{ p.topic.title if p.topic else 'Тема' }} · <span class="text-muted">{{ p.mastery|mastery }}</span></span>
         <span>{{ '%.0f'|format(p.progress) }}%</span>
       </div>
       <div class="progress"><div class="progress-bar" style="width:{{ p.progress }}%"></div></div>
@@ -88,7 +84,7 @@
         {% for h in homeworks %}
         <tr>
           <td>{{ h.title }}</td>
-          <td><span class="badge">{{ h.status.value }}</span></td>
+          <td><span class="badge">{{ h.status|hw_status }}</span></td>
           <td>{{ h.due_at.strftime('%d.%m.%Y') if h.due_at else '—' }}</td>
           <td><a href="/admin/homework/{{ h.id }}/grade" class="btn btn-sm btn-outline">Оценить</a></td>
         </tr>

@@ -5,29 +5,40 @@
 <div class="page-header">
   <div>
     <h1>Карта знаний</h1>
-    <p class="desc">Твой прогресс по темам</p>
+    <p class="desc">Твой прогресс по темам — нажми, чтобы потренироваться</p>
   </div>
 </div>
 
 {% for root in roots %}
 <div class="map-subject">
   <h2>{{ root.title }}</h2>
+  {% if root.description %}<p class="text-muted text-sm mb-2">{{ root.description }}</p>{% endif %}
   <div class="map-topics">
     {% for t in root.children %}
     {% set p = progress.get(t.id) %}
     {% set pct = p.progress if p else 0 %}
-    <a href="/student/practice?topic_id={{ t.id }}" class="map-node" style="text-decoration:none;color:inherit">
+    {% set mastery = p.mastery if p else 'not_started' %}
+    <a href="/student/practice?topic_id={{ t.id }}"
+       class="map-node {% if mastery == 'mastered' %}is-mastered{% elif mastery == 'learning' or mastery == 'practiced' %}is-learning{% endif %}"
+       style="text-decoration:none;color:inherit">
       <div class="node-title">{{ t.title }}</div>
       <div class="progress"><div class="progress-bar" style="width:{{ pct }}%"></div></div>
       <div class="node-meta">
         {{ '%.0f'|format(pct) }}%
-        {% if p %}· {{ p.mastery }}{% else %}· не начато{% endif %}
       </div>
+      <span class="mastery-pill">{{ mastery|mastery }}</span>
     </a>
+    {% else %}
+    <div class="empty-state" style="flex:1">
+      <p>В этом разделе пока нет тем</p>
+    </div>
     {% endfor %}
   </div>
 </div>
 {% else %}
-<div class="card empty">Темы пока не добавлены</div>
+<div class="empty-state">
+  <div class="empty-icon">🗺️</div>
+  <p>Темы пока не добавлены. Преподаватель настроит карту знаний.</p>
+</div>
 {% endfor %}
 {% endblock %}

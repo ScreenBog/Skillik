@@ -11,12 +11,15 @@
     <h2 class="card-title mb-0">{{ l.title }}</h2>
     <p class="text-sm text-muted mt-1">
       {% if l.scheduled_at %}{{ l.scheduled_at.strftime('%d.%m.%Y') }}{% endif %}
-      · {{ l.status }}
+      · {{ l.status|lesson_status }}
     </p>
     <p class="text-sm mt-1">{{ l.description or '' }}</p>
   </a>
   {% else %}
-  <div class="card empty">Уроков пока нет</div>
+  <div class="empty-state" style="grid-column:1/-1">
+    <div class="empty-icon">📚</div>
+    <p>Уроков пока нет. Когда преподаватель опубликует занятие — оно появится здесь.</p>
+  </div>
   {% endfor %}
 </div>
 {% endblock %}

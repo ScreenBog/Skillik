@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "components/icons.html" import icon %}
+{% from "components/flash.html" import render_flash %}
 
 {% block body %}
 <div class="app-shell">
@@ -12,9 +13,12 @@
       {% block sidebar_nav %}{% endblock %}
     </nav>
     <div class="sidebar-footer">
-      {{ user.full_name if user is defined else '' }}
-      <br>
-      <a href="/logout" style="color:rgba(255,255,255,.7);font-size:.85rem;">{{ icon('logout', 16) }} Выйти</a>
+      <div style="margin-bottom:.5rem;font-size:.9rem;color:rgba(255,255,255,.9)">
+        {{ user.full_name if user is defined else '' }}
+      </div>
+      <a href="/logout" style="color:rgba(255,255,255,.7);font-size:.85rem;display:inline-flex;align-items:center;gap:.35rem;text-decoration:none">
+        {{ icon('logout', 16) }} Выйти
+      </a>
     </div>
   </aside>
 
@@ -28,10 +32,11 @@
       </div>
       <div class="topbar-actions">
         {% if user is defined and user.role and user.role.value == 'student' %}
-        <span class="xp-chip">★ {{ user.xp }} XP</span>
+        <span class="xp-chip" title="Опыт">★ {{ user.xp }} XP</span>
         {% endif %}
-        <button type="button" class="theme-toggle" data-theme-toggle title="Тема">
-          {{ icon('sun', 18) }}
+        <button type="button" class="theme-toggle" data-theme-toggle title="Светлая / тёмная тема" aria-label="Переключить тему">
+          <span class="icon-sun">{{ icon('sun', 18) }}</span>
+          <span class="icon-moon">{{ icon('moon', 18) }}</span>
         </button>
         <div class="avatar {% if user is defined and user.avatar_frame and user.avatar_frame != 'none' %}frame-{{ user.avatar_frame }}{% endif %}" title="{{ user.full_name if user is defined else '' }}">
           {{ (user.full_name[:1] if user is defined and user.full_name else '?')|upper }}
@@ -39,6 +44,7 @@
       </div>
     </header>
     <div class="content">
+      {{ render_flash(request) }}
       {% block content %}{% endblock %}
     </div>
   </div>

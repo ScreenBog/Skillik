@@ -9,10 +9,6 @@
   </div>
 </div>
 
-{% if msg == 'ok' %}<div class="alert alert-success">Покупка успешна!</div>{% endif %}
-{% if msg == 'nomoney' %}<div class="alert alert-error">Недостаточно XP</div>{% endif %}
-{% if msg == 'error' %}<div class="alert alert-error">Не удалось купить</div>{% endif %}
-
 <div class="grid grid-3">
   {% for i in items %}
   <div class="card">
